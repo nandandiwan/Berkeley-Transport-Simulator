@@ -468,172 +468,7 @@ class Hamiltonian:
                 
         return diagonal_blocks, off_diagonal_blocks
 
-    def silicon_hamiltonian(self, blocks=True, ky=0, unit_cell = None):
-        # Silicon uses 10 orbitals per atom (s, px, py, pz, five d's, s*)
-        self.num_orbitals = 10
-        if self.periodic is False:
-            return self._base_silicon_hamiltonian(blocks, ky, unit_cell)
-        else:
-            H = self._base_silicon_hamiltonian(False, unit_cell)
-            T0 = self._perioidic_silicon_hamiltonian(False, unit_cell)
-            H_eff = H + T0 * np.exp(np.pi * ky * 1j) + T0.conj().T * np.exp(-np.pi * ky * 1j)
-            
-            if not blocks:
-                return H_eff
-            else:
-                return Hamiltonian._convert_to_blocks(H_eff, 20 * self.Ny * self.Nz)
-        
-    def _base_silicon_hamiltonian(self, blocks=True, unit_cell = None):
-        temp_cell = self.unit_cell
-        if (unit_cell != None):
-            self.unit_cell = unit_cell
-        if (self.unit_cell == None):
-            self.unit_cell = SiliconUnitCell(self.si_length, self.si_width, self.si_thickness, self.periodic)
-            temp_cell = self.unit_cell
 
-        # per-layer block size (not used for full H until block split below)
-        block_size = self.num_orbitals * self.si_thickness * self.si_width * 2
-        unitNeighbors = self.unit_cell.neighbors
-        danglingBonds = self.unit_cell.danglingBonds
-        numSilicon = len(unitNeighbors.keys())
-
-        # use local orbital count for sizing/indexing
-        orbitals = ['s', 'px', 'py', 'pz', 'dxy','dyz','dzx','dx2y2','dz2', 's*']
-        n_orb = len(orbitals)
-        size = numSilicon * n_orb
-
-        atomToIndex = {}
-        indexToAtom = {}
-        for atom_index, atom in enumerate(unitNeighbors):
-            atomToIndex[atom] = atom_index
-            indexToAtom[atom_index] = atom
-
-        rows, cols, data = [], [], []  # sparse triplets
-
-        def add(i, j, val):
-            if val != 0.0:
-                rows.append(i); cols.append(j); data.append(val)
-                if i != j:  # Hermitian
-                    rows.append(j); cols.append(i); data.append(np.conj(val))
-
-        # On-site blocks
-        for atom_idx, atom in indexToAtom.items():
-            hybridizationMatrix = self.H_sp3_explicit.copy()
-            danglingBondsList = danglingBonds[atom]
-            for danglingBondAtom, position in danglingBondsList:
-                hybridizationMatrix[position, position] += TBP.E['sp3']-  20
-
-            # transform to (s, px, py, pz) basis
-            onsiteMatrix = self.U_orb_to_sp3 @ hybridizationMatrix @ self.U_orb_to_sp3.T
-            base = atom_idx * n_orb
-
-            for i in range(4):
-                for j in range(i, 4):
-                    add(base + i, base + j, onsiteMatrix[i, j])
-
-            for p in range(4, 9):  # five d’s
-                add(base + p, base + p, TBP.E['dxy'])
-            add(base + 9, base + 9, TBP.E['s*'])
-
-        # Hopping between neighboring atoms
-        for atom_index, atom in indexToAtom.items():
-            base_i = atom_index * n_orb
-            for atom2, delta, l, m, n in unitNeighbors[atom]:
-                j = atomToIndex[atom2]
-                if j < atom_index:
-                    continue
-                for o1, orb1 in enumerate(orbitals):
-                    for o2, orb2 in enumerate(orbitals):
-                        hop = TBP.SK[(orb1, orb2)](l, m, n, TBP.V)
-                        add(base_i + o1, j * n_orb + o2, hop)
-
-                
-    
-        H = sp.coo_matrix((data, (rows, cols)), shape=(size, size)).tocsc()
-        if blocks == False:
-            self.unit_cell = temp_cell
-            return H
-        total_size = H.shape[0]
-        block_size = self.si_thickness * 20  *self.unit_cell.Ny # 2 atoms per single unit z layer 
-        num_blocks = (int) (total_size // block_size)
-        diagonal_blocks = [None] * num_blocks
-        off_diagonal_blocks = [None] * (num_blocks - 1)
-        
-        for block in range(0, num_blocks - 1):
-            s = block * block_size
-            m = (block + 1) * block_size
-            e = (block + 2) * block_size
-            diagonal_blocks[block] = H[s : m, s : m] 
-            off_diagonal_blocks[block] = H[s : m, m : e]
-        diagonal_blocks[-1] = H[-block_size:, -block_size:]     
-        self.unit_cell = temp_cell
-        return diagonal_blocks, off_diagonal_blocks
-        
-    def _perioidic_silicon_hamiltonian(self, blocks=True, unit_cell=None):
-        temp_cell = self.unit_cell
-        if unit_cell is not None:
-            self.unit_cell = unit_cell
-        if self.unit_cell is None:
-            self.unit_cell = SiliconUnitCell(self.si_length, self.si_width, self.si_thickness, self.periodic)
-            temp_cell = self.unit_cell
-
-        # Build T0 across periodic Y boundaries only
-        unitNeighbors = self.unit_cell.neighbors
-        periodic_bonds = self.unit_cell.periodicBonds
-        numSilicon = len(unitNeighbors.keys())
-
-        orbitals = ['s', 'px', 'py', 'pz', 'dxy', 'dyz', 'dzx', 'dx2y2', 'dz2', 's*']
-        n_orb = len(orbitals)
-        size = numSilicon * n_orb
-
-        atomToIndex = {}
-        indexToAtom = {}
-        for atom_index, atom in enumerate(unitNeighbors):
-            atomToIndex[atom] = atom_index
-            indexToAtom[atom_index] = atom
-
-        rows, cols, data = [], [], []
-
-        def add_nonhermitian(i, j, val):
-            if val != 0.0:
-                rows.append(i)
-                cols.append(j)
-                data.append(val)
-
-        # Only add +Y periodic couplings to T0; -Y are handled by T0^† when forming H_eff
-        for atom_index, atom in indexToAtom.items():
-            base_i = atom_index * n_orb
-            for bond in periodic_bonds[atom]:
-                if len(bond) == 6:
-                    atom2, delta, l, m, n, shift = bond
-                else:
-                    atom2, delta, l, m, n = bond
-                    shift = 0
-                if shift == -1:
-                    continue
-                j = atomToIndex[atom2]
-                base_j = j * n_orb
-                for o1, orb1 in enumerate(orbitals):
-                    for o2, orb2 in enumerate(orbitals):
-                        hop = TBP.SK[(orb1, orb2)](l, m, n, TBP.V)
-                        add_nonhermitian(base_i + o1, base_j + o2, hop)
-
-        T0 = sp.coo_matrix((data, (rows, cols)), shape=(size, size)).tocsc()
-        if blocks is False:
-            self.unit_cell = temp_cell
-            return T0
-
-        total_size = T0.shape[0]
-        block_cols = self.si_thickness * 20 * self.unit_cell.Ny
-        num_blocks = int(total_size // block_cols)
-        off_diagonal_blocks = [None] * (num_blocks - 1)
-        for block in range(0, num_blocks - 1):
-            s = block * block_cols
-            m = (block + 1) * block_cols
-            e = (block + 2) * block_cols
-            off_diagonal_blocks[block] = T0[s:m, m:e]
-        self.unit_cell = temp_cell
-        return off_diagonal_blocks
     def create_hamiltonian(self, blocks=True, ky=0, no_pot=False):
         """
         General interface to get the Hamiltonian for the specified device type.
@@ -648,8 +483,6 @@ class Hamiltonian:
             H = self.one_d_wire(blocks=blocks)
         elif self.name == "quantum_point_contact" or self.name == "qpc":
             H = self.quantum_point_contact(blocks=blocks)
-        elif self.name == "silicon":
-            H = self.silicon_hamiltonian(blocks, ky)
         else:
             # You can add other device types like "one_d_wire" here.
             raise ValueError(f"Unknown device type: {self.name}")
@@ -701,17 +534,7 @@ class Hamiltonian:
             return H00, H01, H10
         
         if self.name == "silicon":
-            if (side == "right"):
-                orientation = (0,1,2,3)
-            else:
-                orientation = (3,2,1,0)
-            new_unit_cell = SiliconUnitCell(2, self.si_width, self.si_thickness, self.periodic, orientation = orientation)
-            H = self.silicon_hamiltonian(False, 0, new_unit_cell)
-            num_sites = H.shape[0] //2 
-            H00 = H[:num_sites, :num_sites]
-            H01 = H[:num_sites, num_sites:]
-            H10 = H[num_sites:, :num_sites]
-            return H00, H01, H10
+            raise NotImplemented("only band diagram is done for now")
         else:
             raise ValueError(f"Lead definition not found for device: {self.name}")
         
