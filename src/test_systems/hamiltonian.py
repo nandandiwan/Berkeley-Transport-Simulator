@@ -8,8 +8,10 @@ import copy
 import numpy as np
 import scipy.sparse as sp
 import scipy.constants as spc
-from unit_cell_generation import GrapehenearmchairCell, SiliconUnitCell
+from unit_cell_generation import GrapehenearmchairCell
 from src.tight_binding import tight_binding_params as TBP
+from tight_binding_helper import SiNWGenerator, PeriodicTB
+
 
 class Hamiltonian:
     """
@@ -85,8 +87,14 @@ class Hamiltonian:
         self.potential = None
         
         # silicon parameters
-        self.si_length = 3
-        self.si_width = 2
+        self.si_ny = 1
+        self.si_nx = 2
+        self.si_nz = 2
+
+        self.ham_generator = None
+            
+        
+        
         self.si_thickness = 2
         self.U_orb_to_sp3 = 0.5*np.array([[1, 1, 1, 1],
                                     [1, 1,-1,-1],
@@ -108,7 +116,6 @@ class Hamiltonian:
             self.mock_potential = False
         
         if (self.name == "armchair"):
-
             self.unit_cell = GrapehenearmchairCell(num_layers_x=self.Nx, num_layers_y=self.Ny, periodic=self.periodic)
             
     
@@ -468,6 +475,19 @@ class Hamiltonian:
                 
         return diagonal_blocks, off_diagonal_blocks
 
+    def create_silicon_hamiltonian(self, blocks, ky = 0.0):
+        ky = [0,ky,0]
+        if (self.unit_cell == None):
+            gen = SiNWGenerator.generate(nx=self.si_nx, ny=self.si_ny, nz=self.si_nz, periodic_dirs='y')
+            tb = PeriodicTB.from_generated_nw(gen, periodic_axis='y')
+            
+            self.unit_cell = gen
+            self.ham_generator =tb
+        
+        H = self.ham_generator.h_of_k_fast(ky)
+        
+        return H
+            
 
     def create_hamiltonian(self, blocks=True, ky=0, no_pot=False):
         """
@@ -483,6 +503,8 @@ class Hamiltonian:
             H = self.one_d_wire(blocks=blocks)
         elif self.name == "quantum_point_contact" or self.name == "qpc":
             H = self.quantum_point_contact(blocks=blocks)
+        elif self.name == "silicon":
+            H = self.create_silicon_hamiltonian(blocks, ky)
         else:
             # You can add other device types like "one_d_wire" here.
             raise ValueError(f"Unknown device type: {self.name}")

@@ -5,8 +5,8 @@ with the reference implementation. Supports l up to d and sigma/pi/delta.
 """
 from __future__ import annotations
 import math, sys
-import tb_params
-from constants import ORBITAL_QN, M_QN
+from . import tb_params
+from .constants import ORBITAL_QN, M_QN
 
 def _me_diatomic(bond, ncode, l_min, l_max, m, which_neighbour, overlap=False):
     flag = 'OV_' if overlap else 'PARAMS_'

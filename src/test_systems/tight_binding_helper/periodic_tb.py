@@ -3,11 +3,11 @@
 from __future__ import annotations
 import numpy as np
 import scipy.linalg as la
-from orbitals import SiliconSP3D5S, HydrogenS
-from diatomic_matrix_element import me
+from .orbitals import SiliconSP3D5S, HydrogenS
+from .diatomic_matrix_element import me
 try:
-    from parametric_sinw import GeneratedNW  
-except Exception:  
+    from .parametric_sinw import GeneratedNW  # optional import for type hints / factory method
+except Exception:  # pragma: no cover
     GeneratedNW = None
 
 _si = SiliconSP3D5S()
@@ -24,7 +24,8 @@ def read_xyz(path):
     return entries
 
 class PeriodicTB:
-    def __init__(self, xyz_path=None, *, entries=None, a_vec=(0,0,5.50), nn_distance=2.4, compute_angular=True):
+    def __init__(self, xyz_path=None, *, entries=None, a_vec=(0,0,5.50), nn_distance=2.4, compute_angular=True,
+                 periodic_axis='z', transport_axis=None, a_scalar=None):
         """Periodic tight-binding system.
 
         Provide either xyz_path (path to XYZ file) or pre-built entries list.
@@ -36,7 +37,13 @@ class PeriodicTB:
             self.entries = read_xyz(xyz_path)
         else:
             self.entries = entries
+        # Periodic (Bloch) translation vector used for k-phase
         self.a_vec = np.array(a_vec, dtype=float)
+        self.periodic_axis = periodic_axis
+        # Transport axis (principal layer direction) may differ; default to periodic_axis if not provided
+        self.transport_axis = transport_axis or periodic_axis
+        # Conventional lattice scalar (Angstrom) if provided; else infer from |a_vec| if non-zero
+        self.a_scalar = a_scalar if a_scalar is not None else (np.linalg.norm(self.a_vec) if np.linalg.norm(self.a_vec) > 0 else 5.50)
         self.nn_distance = nn_distance
         self.compute_angular = compute_angular
         self.species_map = {'Si': _si, 'H': _h}
@@ -45,36 +52,112 @@ class PeriodicTB:
         self.orbital_counts = [self.species_map[s].num_of_orbitals for s in self.site_species]
         self.offsets = np.cumsum([0]+self.orbital_counts[:-1])
         self.basis_size = sum(self.orbital_counts)
-    
-        self._onsite = []       
-        self._Hc = []          
-        self._Hr = []            
-        self._Hl = []         
+
+        self._onsite = []
+        self._Hc = []
+        self._Hr = []
+        self._Hl = []
         self._build_static()
         self._prepare_dense_blocks()
+        # Transport Hamiltonian caches (lazy build)
+        self._transport_cache = None
 
+    @staticmethod
+    def sort_smart(entries):
+        """Placeholder ordering hook (currently identity)."""
+        return entries
+        
+    
     @classmethod
-    def from_generated_nw(cls, gen, *, periodic_axis='z', nn_distance=2.4, compute_angular=True):
+    def from_generated_nw(cls, gen, *, periodic_axis='z', transport_axis=None, nn_distance=2.4, compute_angular=True):
         """Create PeriodicTB directly from a GeneratedNW object (no XYZ file).
 
-        periodic_axis: axis along which the structure is considered periodic for Bloch phase.
-                       'x','y', or 'z'. (Default 'z')
-        The lattice translation length along that axis is set to gen.n{axis} * gen.a.
+        periodic_axis: 'x','y' or 'z' (default 'z'). The lattice translation
+        length is set to gen.n{axis} * gen.a (e.g. gen.nz * gen.a for 'z').
         """
-        # Derive lattice vector
-        if periodic_axis not in ('x','y','z'):
+        if periodic_axis not in ('x', 'y', 'z'):
             raise ValueError("periodic_axis must be one of 'x','y','z'")
-        mult = getattr(gen, f'n{periodic_axis}')
-        length = mult * gen.a
-        a_vec = {
-            'x': (length,0,0),
-            'y': (0,length,0),
-            'z': (0,0,length),
-        }[periodic_axis]
+        # Map axis to multiplicity field on GeneratedNW
+        mult = {'x': getattr(gen, 'nx', None), 'y': getattr(gen, 'ny', None), 'z': getattr(gen, 'nz', None)}[periodic_axis]
+        if mult is None:
+            raise ValueError('Provided object does not have nx/ny/nz attributes')
+        length = float(mult) * float(gen.a)
+        a_vec = {'x': (length, 0.0, 0.0), 'y': (0.0, length, 0.0), 'z': (0.0, 0.0, length)}[periodic_axis]
 
-        atoms = gen.all_atoms()
-        entries = [(lab, float(x), float(y), float(z)) for (lab,x,y,z) in atoms]
-        return cls(entries=entries, a_vec=a_vec, nn_distance=nn_distance, compute_angular=compute_angular)
+        # Build entries list from gen.all_atoms() -> returns list of (label,x,y,z)
+        entries = [(lab, float(x), float(y), float(z)) for (lab, x, y, z) in gen.all_atoms()]
+        entries = PeriodicTB.sort_smart(entries)
+        return cls(entries=entries, a_vec=a_vec, nn_distance=nn_distance, compute_angular=compute_angular,
+                   periodic_axis=periodic_axis, transport_axis=transport_axis, a_scalar=gen.a)
+
+    # ---------------- Transport Hamiltonians (hl, h0, hr) -----------------
+    def _classify_pairs_for_translation(self, t_vec):
+        """Classify atom pairs relative to translation vector t_vec (like a_vec) returning lists.
+
+        Returns (intra_list, plus_list) where plus_list are couplings to +t_vec. (Minus couplings implicit via Hermitian.)
+        Each list element is {'tlist':[(gi,gj,val)]} similar to existing structures.
+        """
+        intra = []
+        plus = []
+        n_sites = len(self.entries)
+        for i in range(n_sites):
+            for j in range(i+1, n_sites):
+                base = self.positions[i] - self.positions[j]
+                candidates = [(base,0),(base + t_vec,+1),(base - t_vec,-1)]
+                cand_in = [(d,n) for d,n in candidates if 0 < np.linalg.norm(d) <= self.nn_distance]
+                if not cand_in:
+                    continue
+                cand_in.sort(key=lambda x: (np.linalg.norm(x[0]), {0:0,+1:1,-1:2}[x[1]]))
+                d_sel, n_sel = cand_in[0]
+                tlist = self._compute_tlist(i,j,d_sel)
+                if not tlist:
+                    continue
+                if n_sel == 0:
+                    intra.append({'tlist': tlist})
+                elif n_sel == +1:
+                    plus.append({'tlist': tlist})
+                else:  # n_sel == -1
+                    rev = [(gj, gi, np.conjugate(val)) for gi, gj, val in tlist]
+                    plus.append({'tlist': rev})
+        return intra, plus
+
+    def get_transport_hamiltonians(self, *, transport_axis=None):
+        """Return (hl, h0, hr) for recursive Green's function along transport axis.
+
+        hl = hr^†.
+        h0 is Hermitian onsite+intra-cell term relative to chosen translation length a_scalar.
+
+        transport_axis: override stored transport axis (x,y,z). Translation length = a_scalar.
+        """
+        axis = transport_axis or self.transport_axis
+        if axis not in ('x','y','z'):
+            raise ValueError('transport_axis must be x,y, or z')
+        if self._transport_cache and self._transport_cache.get('axis') == axis:
+            return self._transport_cache['hl'], self._transport_cache['h0'], self._transport_cache['hr']
+
+        # Build translation vector of length a_scalar along axis
+        length = self.a_scalar
+        t_vec = {'x': np.array([length,0,0]), 'y': np.array([0,length,0]), 'z': np.array([0,0,length])}[axis]
+        intra, plus = self._classify_pairs_for_translation(t_vec)
+        n = self.basis_size
+        h0 = np.zeros((n,n), dtype=complex)
+        hr = np.zeros((n,n), dtype=complex)
+        # Onsite energies in h0
+        for idx,e in self._onsite:
+            h0[idx, idx] = e
+        # Intra symmetric
+        for rec in intra:
+            for gi, gj, val in rec['tlist']:
+                h0[gi, gj] += val
+                h0[gj, gi] += np.conjugate(val)
+        # Plus couplings (do not add symmetric here)
+        for rec in plus:
+            for gi, gj, val in rec['tlist']:
+                hr[gi, gj] += val
+        hl = hr.conj().T  # Hermitian conjugate
+        self._transport_cache = {'axis': axis, 'hl': hl, 'h0': h0, 'hr': hr}
+        return hl, h0, hr
+
 
     def _compute_tlist(self, i, j, d_vec):
         dist = np.linalg.norm(d_vec)

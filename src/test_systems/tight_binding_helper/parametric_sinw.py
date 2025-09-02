@@ -66,7 +66,19 @@ class SiNWGenerator:
     def generate(nx=2, ny=2, nz=1, a=A_DEFAULT, periodic_dirs: str | None = 'z', passivate_x: bool = True) -> GeneratedNW:
         """
         Generates a silicon nanowire of size (nx, ny, nz) with hydrogen passivation.
+
+        periodic_dirs:
+            String containing any of 'x','y','z' that are to be treated as periodic.
+            If None or empty, the structure is finite (cluster) in all directions
+            and hydrogens will be added on all exposed surfaces (subject to
+            passivate_x flag for +/-x faces).
+        passivate_x:
+            If False, suppress only hydrogens that would extend OUTSIDE the
+            silicon domain along +/-x (i.e. candidate H has x < 0 or x > nx*a).
         """
+        # Normalize periodic_dirs to empty string if falsy (fully finite)
+        if not periodic_dirs:
+            periodic_dirs = ''
         # generate silicon first using known positions
         tol = 1e-6
         x_max, y_max, z_max = nx * a, ny * a, nz * a
@@ -143,13 +155,14 @@ class SiNWGenerator:
                 unoccupied_vectors.pop(best_match_idx)
             
             for d_vec in unoccupied_vectors:
-
-                is_x_bond = np.argmax(np.abs(d_vec)) == 0
-                if not passivate_x and is_x_bond:
-                    continue
-
                 norm_vec = d_vec / np.linalg.norm(d_vec)
-                potential_h_positions.append(pos_i + norm_vec * SI_H_BOND_LENGTH)
+                candidate_pos = pos_i + norm_vec * SI_H_BOND_LENGTH
+                if not passivate_x:
+                    # Skip only hydrogens that protrude beyond the silicon x bounds.
+                    # (Surface hydrogens on +/-y or +/-z are still allowed.)
+                    if candidate_pos[0] < -tol or candidate_pos[0] > x_max + tol:
+                        continue
+                potential_h_positions.append(candidate_pos)
         
         if not potential_h_positions:
             return GeneratedNW(a, nx, ny, nz, sorted([tuple(p) for p in si_positions_np]), [])
@@ -191,6 +204,7 @@ class SiNWGenerator:
             atoms.sort(key=lambda atom: (atom[0], atom[3], atom[2], atom[1])) # Sort by z,y,x
             for i, (lab, x, y, z) in enumerate(atoms, 1):
                 f.write(f"{lab:<2} {x:11.6f} {y:11.6f} {z:11.6f}\n")
+
 
 
 def test_parametric():

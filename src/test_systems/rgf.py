@@ -25,7 +25,12 @@ from numpy.fft import rfft, irfft
 from hamiltonian import Hamiltonian
 from lead_self_energy import LeadSelfEnergy
 from utils import smart_inverse, sparse_diag_product, chandrupatla
-from ozaki_helper import get_ozaki_poles_residues, fermi_cfr, fermi_derivative_cfr_abs
+from ozaki_helper import (
+    get_ozaki_poles_residues,
+    fermi_cfr,
+    fermi_derivative_cfr_abs,
+    fermi_derivative_cfr_abs_batch,
+)
 
 
 
@@ -692,7 +697,7 @@ class GreensFunction:
         return self.dE * G_n_diag * 1 / (2 * np.pi)
 
     def diff_rho_poisson(self, Efn=None, V=None, Ec=None, num_points=51, boltzmann=False, use_rgf=True,
-                          self_energy_method="sancho_rubio", method='gauss_fermi', processes=32,
+                          self_energy_method="sancho_rubio", method='ozaki_cfr', processes=32,
                           ozaki_cutoff: int = 60, force_recompute_ozaki: bool = False):
         """Compute d n / d V using selected integration backend.
 
@@ -756,6 +761,29 @@ class GreensFunction:
                 else:
                     with multiprocessing.Pool(processes=processes) as pool:
                         results = pool.map(self._diff_rho_ozaki_worker, ky_list)
+            elif method == 'ozaki_adaptive':
+                if force_recompute_ozaki:
+                    try:
+                        get_ozaki_poles_residues.cache_clear()
+                    except Exception:
+                        pass
+                self._diff_params = {
+                    'Ef': Ec,
+                    'use_rgf': use_rgf,
+                    'self_energy_method': self_energy_method,
+                    'ozaki_cutoff': ozaki_cutoff,
+                    'V_vec': np.atleast_1d(V),
+                    'Efn_vec': np.atleast_1d(Efn),
+                    'boltzmann': boltzmann,
+                    'rtol': 1e-5,
+                    'atol': 1e-12
+                }
+                if processes <= 1 or len(ky_list) == 1:
+                    print("Running diff_rho_poisson (ozaki_adaptive) in serial mode.")
+                    results = [self._diff_rho_ozaki_adaptive_worker(ky) for ky in ky_list]
+                else:
+                    with multiprocessing.Pool(processes=processes) as pool:
+                        results = pool.map(self._diff_rho_ozaki_adaptive_worker, ky_list)
             else:
                 raise ValueError(f"Unsupported method '{method}' for diff_rho_poisson")
         finally:
@@ -870,6 +898,19 @@ class GreensFunction:
                     self._worker_params['use_rgf'] = use_rgf
                     self._worker_params['self_energy_method'] = self_energy_method
                     results = [self._ozaki_cfr_worker(ky) for ky in self.k_space]
+                elif method == 'ozaki_adaptive':
+                    if force_recompute_ozaki:
+                        try:
+                            get_ozaki_poles_residues.cache_clear()
+                        except Exception:
+                            pass
+                    self._worker_params['ozaki_cutoff'] = ozaki_cutoff
+                    self._worker_params['Ec_array'] = self._Ec_array
+                    self._worker_params['use_rgf'] = use_rgf
+                    self._worker_params['self_energy_method'] = self_energy_method
+                    self._worker_params['rtol'] = rtol
+                    self._worker_params['atol'] = atol
+                    results = [self._ozaki_adaptive_worker(ky) for ky in self.k_space]
                 else:
                     mu_min = np.min(self.V + self.Efn)
                     mu_max = np.max(self.V + self.Efn)
@@ -903,6 +944,19 @@ class GreensFunction:
                         self._worker_params['use_rgf'] = use_rgf
                         self._worker_params['self_energy_method'] = self_energy_method
                         results = pool.map(self._ozaki_cfr_worker, self.k_space)
+                    elif method == 'ozaki_adaptive':
+                        if force_recompute_ozaki:
+                            try:
+                                get_ozaki_poles_residues.cache_clear()
+                            except Exception:
+                                pass
+                        self._worker_params['ozaki_cutoff'] = ozaki_cutoff
+                        self._worker_params['Ec_array'] = self._Ec_array
+                        self._worker_params['use_rgf'] = use_rgf
+                        self._worker_params['self_energy_method'] = self_energy_method
+                        self._worker_params['rtol'] = rtol
+                        self._worker_params['atol'] = atol
+                        results = pool.map(self._ozaki_adaptive_worker, self.k_space)
                     else:
                         mu_min = np.min(self.V + self.Efn)
                         mu_max = np.max(self.V + self.Efn)
@@ -933,7 +987,7 @@ class GreensFunction:
             total_density = np.sum(results, axis=0)
             if len(self.k_space) > 0:
                 total_density /= len(self.k_space)
-        elif method == 'ozaki_cfr':
+        elif method in ('ozaki_cfr','ozaki_adaptive'):
             # Average over k-points already raw densities
             total_density = np.mean(results, axis=0)
         else:  # gauss_fermi
@@ -977,18 +1031,92 @@ class GreensFunction:
         for iE, E in enumerate(E_grid):
             ldos_vec = self._get_ldos_cached(E, ky, self_energy_method=self_energy_method, use_rgf=use_rgf)
             ldos_mat[iE, :] = ldos_vec
-        mu = np.mean(self.V + self.Efn)  # approximate local quasi-Fermi average
+        # Evaluate CFR per-site using local V and Efn vectors so the Fermi weight
+        # correctly accounts for site-dependent potential and quasi-Fermi levels.
         poles, residues = get_ozaki_poles_residues(cutoff, self.ham.kbT_eV, getattr(self.ham,'T',300))
-        f_cfr = fermi_cfr(E_grid, mu, poles, residues, self.ham.kbT_eV)
+        # fermi_cfr returns shape (nE, n_sites) when V_vec/Efn_vec provided
+        f_cfr_mat = fermi_cfr(E_grid, None, poles, residues, self.ham.kbT_eV, V_vec=self.V, Efn_vec=self.Efn)
         if self._worker_params.get('conduction_only', True):
             Ec_matrix = Ec_array[None, :]
             E_matrix = E_grid[:, None]
             mask = (E_matrix >= Ec_matrix)
-            contrib = ldos_mat * f_cfr[:, None] * mask
+            contrib = ldos_mat * f_cfr_mat * mask
         else:
-            contrib = ldos_mat * f_cfr[:, None]
+            contrib = ldos_mat * f_cfr_mat
         density_k = np.sum(contrib, axis=0) * dE
         return density_k
+
+    def _ozaki_adaptive_worker(self, ky):
+        """Adaptive Simpson integration for density using Ozaki CFR (per k-point).
+        Avoids fixed energy grid; adaptively refines where LDOS*Fermi changes fast.
+        Returns density vector (n_sites,)."""
+        p = self._worker_params
+        cutoff = p['ozaki_cutoff']
+        use_rgf = p['use_rgf']
+        self_energy_method = p['self_energy_method']
+        rtol = p.get('rtol', 1e-6)
+        atol = p.get('atol', 1e-12)
+        kT = self.ham.kbT_eV
+        V_vec = self.V
+        Efn_vec = self.Efn
+        n_sites = self.ham.get_num_sites()
+        Ec_array = np.atleast_1d(p['Ec_array'])
+        if Ec_array.size == 1:
+            Ec_array = np.full(n_sites, Ec_array[0])
+        elif Ec_array.size != n_sites:
+            if Ec_array.size < n_sites:
+                Ec_array = np.pad(Ec_array, (0, n_sites - Ec_array.size), mode='edge')
+            else:
+                Ec_array = Ec_array[:n_sites]
+        conduction_only = p.get('conduction_only', True)
+        mu_avg = float(np.mean(V_vec + Efn_vec))
+        # Energy bounds
+        E_low = float(np.min(Ec_array)) if conduction_only else (mu_avg - 2.0)
+        x_max = 12.0
+        E_high = mu_avg + x_max * kT
+        if E_low >= E_high:
+            E_low = E_high - 1e-3
+        poles, residues = get_ozaki_poles_residues(cutoff, kT, getattr(self.ham,'T',300))
+        cache_f = {}
+        def integrand(E):
+            key = float(E)
+            v = cache_f.get(key)
+            if v is not None:
+                return v
+            if conduction_only and E < Ec_array.min():
+                z = np.zeros(n_sites, dtype=float)
+                cache_f[key] = z
+                return z
+            ldos = self._get_ldos_cached(E, ky, self_energy_method=self_energy_method, use_rgf=use_rgf)
+            f_vals = fermi_cfr(np.array([E]), None, poles, residues, kT, V_vec=V_vec, Efn_vec=Efn_vec)[0]
+            if conduction_only:
+                f_vals = np.where(E >= Ec_array, f_vals, 0.0)
+            out = ldos * f_vals
+            cache_f[key] = out
+            return out
+        max_depth = 10
+        def adaptive(a,b,fa,fb,fm,S,depth):
+            m = 0.5*(a+b)
+            m1 = 0.5*(a+m)
+            m2 = 0.5*(m+b)
+            f_m1 = integrand(m1)
+            f_m2 = integrand(m2)
+            S_left = (m - a)/6.0 * (fa + 4.0*f_m1 + fm)
+            S_right = (b - m)/6.0 * (fm + 4.0*f_m2 + fb)
+            S2 = S_left + S_right
+            err = np.abs(S2 - S)
+            tol_vec = atol + rtol * np.maximum(np.abs(S2), 1e-30)
+            if (depth >= max_depth) or np.all(err <= 15.0 * tol_vec):
+                return S2 + (S2 - S)/15.0
+            return adaptive(a,m,fa,fm,f_m1,S_left,depth+1) + adaptive(m,b,fm,fb,f_m2,S_right,depth+1)
+        a = E_low
+        b = E_high
+        fa = integrand(a)
+        fb = integrand(b)
+        m = 0.5*(a+b)
+        fm = integrand(m)
+        S0 = (b - a)/6.0 * (fa + 4.0*fm + fb)
+        return adaptive(a,b,fa,fb,fm,S0,0)
 
     # adaptive integration removed
 
@@ -1048,12 +1176,76 @@ class GreensFunction:
         Ec = params['Ef']
         use_rgf = params['use_rgf']
         self_energy_method = params['self_energy_method']
-        deriv_vec = np.zeros_like(V_vec, dtype=float)
-        for E in self.energy_grid:
-            ldos = self._get_ldos_cached(E, ky, self_energy_method=self_energy_method, use_rgf=use_rgf)
-            dfdx_abs = fermi_derivative_cfr_abs(np.array([E]), V_vec, Efn_vec, poles, residues, kT)
-            deriv_vec += ldos * (dfdx_abs / kT) * self.dE
+        # Build LDOS matrix (nE, n_sites) for this ky once
+        E_grid = self.energy_grid
+        nE = E_grid.size
+        n_sites = V_vec.size
+        ldos_mat = np.zeros((nE, n_sites), dtype=float)
+        for iE, E in enumerate(E_grid):
+            ldos_mat[iE, :] = self._get_ldos_cached(E, ky, self_energy_method=self_energy_method, use_rgf=use_rgf)
+        # Batch derivative |df/dx| over all energies (nE, n_sites)
+        dfdx_abs_mat = fermi_derivative_cfr_abs_batch(E_grid, V_vec, Efn_vec, poles, residues, kT)
+        # dn/dV = sum_E LDOS(E)* (|df/dx|/kT) dE  (since d/dV of f(E - (V+Efn)) = -df/dE = |df/dx|/kT)
+        deriv_vec = np.sum(ldos_mat * (dfdx_abs_mat / kT), axis=0) * self.dE
         return deriv_vec
+
+    def _diff_rho_ozaki_adaptive_worker(self, ky):
+        """Adaptive Simpson integration for dn/dV using Ozaki CFR derivative (per k-point)."""
+        params = getattr(self, '_diff_params')
+        kT = self.ham.kbT_eV
+        poles, residues = get_ozaki_poles_residues(params['ozaki_cutoff'], kT, getattr(self.ham,'T',300))
+        V_vec = params['V_vec']
+        Efn_vec = params['Efn_vec']
+        Ec = params['Ef']
+        use_rgf = params['use_rgf']
+        self_energy_method = params['self_energy_method']
+        rtol = params.get('rtol', 1e-5)
+        atol = params.get('atol', 1e-12)
+        mu_avg = float(np.mean(V_vec + Efn_vec))
+        E_low = float(Ec) if Ec is not None else (mu_avg - 2.0)
+        x_max = 12.0
+        E_high = mu_avg + x_max * kT
+        if E_low >= E_high:
+            E_low = E_high - 1e-3
+        cache_d = {}
+        n_sites = V_vec.size
+        def deriv_integrand(E):
+            key = float(E)
+            v = cache_d.get(key)
+            if v is not None:
+                return v
+            if (Ec is not None) and (E < E_low):
+                z = np.zeros(n_sites, dtype=float)
+                cache_d[key] = z
+                return z
+            ldos_vec = self._get_ldos_cached(E, ky, self_energy_method=self_energy_method, use_rgf=use_rgf)
+            dfdx_abs = fermi_derivative_cfr_abs_batch(np.array([E]), V_vec, Efn_vec, poles, residues, kT)[0]
+            out = ldos_vec * (dfdx_abs / kT)
+            cache_d[key] = out
+            return out
+        max_depth = 10
+        def adaptive(a,b,fa,fb,fm,S,depth):
+            m = 0.5*(a+b)
+            m1 = 0.5*(a+m)
+            m2 = 0.5*(m+b)
+            f_m1 = deriv_integrand(m1)
+            f_m2 = deriv_integrand(m2)
+            S_left = (m - a)/6.0 * (fa + 4.0*f_m1 + fm)
+            S_right = (b - m)/6.0 * (fm + 4.0*f_m2 + fb)
+            S2 = S_left + S_right
+            err = np.abs(S2 - S)
+            tol_vec = atol + rtol * np.maximum(np.abs(S2), 1e-30)
+            if (depth >= max_depth) or np.all(err <= 15.0 * tol_vec):
+                return S2 + (S2 - S)/15.0
+            return adaptive(a,m,fa,fm,f_m1,S_left,depth+1) + adaptive(m,b,fm,fb,f_m2,S_right,depth+1)
+        a = E_low
+        b = E_high
+        fa = deriv_integrand(a)
+        fb = deriv_integrand(b)
+        m = 0.5*(a+b)
+        fm = deriv_integrand(m)
+        S0 = (b - a)/6.0 * (fa + 4.0*fm + fb)
+        return adaptive(a,b,fa,fb,fm,S0,0)
 
     # --- Worker for Uniform Grid Integration ---
     def _uniform_worker(self, params):
