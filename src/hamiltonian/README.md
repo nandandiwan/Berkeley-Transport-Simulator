@@ -1,0 +1,1 @@
+# Hamiltonian class (copying Nanonet pretty much exactly for now)

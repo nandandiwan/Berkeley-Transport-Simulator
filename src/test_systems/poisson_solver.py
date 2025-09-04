@@ -9,45 +9,20 @@ import dolfinx.nls.petsc
 import ufl
 from typing import Optional, Tuple
 import matplotlib.pyplot as plt
+from hamiltonian import Hamiltonian  
+from rgf import GreensFunction  
 
-try:  # Local imports (may be incomplete stubs in repo snapshot)
-    from hamiltonian import Hamiltonian  # type: ignore
-except Exception:  # pragma: no cover
-    class Hamiltonian:  # minimal stub
-        def __init__(self, name: str = "one_d_wire"):
-            self.name = name
-            self.N = 100
-            self.potential = None
-        def set_potential(self, pot):
-            self.potential = pot
 
-try:
-    from rgf import GreensFunction  # type: ignore
-except Exception:  # pragma: no cover
-    class GreensFunction:  # minimal stub
-        def __init__(self, hamiltonian: Hamiltonian):
-            self.ham = hamiltonian
-        def clear_ldos_cache(self):
-            pass
-        def fermi_energy(self, V, Ec=-2, **kwargs):  # simplistic placeholder
-            return 0.0
-        def get_n(self, V, Efn, Ec=-2, processes=1, **kwargs):
-            # Return a smooth decaying profile as placeholder (#/m^3)
-            x = np.linspace(0, 1, len(V))
-            return 1e21 * np.exp(-2 * (x - 0.5) ** 2)
-        def diff_rho_poisson(self, Efn=None, V=None, Ec=-2, processes=1, **kwargs):
-            return -1e21 * np.ones_like(V)
 
-# --- Physical constants ---
-q = 1.602e-19          # Elementary charge (C)
-k_B = 1.380e-23        # Boltzmann constant (J/K)
-T = 300.0              # Temperature (K)
-epsilon_0 = 8.854e-12  # Vacuum permittivity (F/m)
-epsilon_r = 11.7       # Relative permittivity (Si)
+q = 1.602e-19        
+k_B = 1.380e-23        
+T = 300.0        
+epsilon_0 = 8.854e-12 
+epsilon_r = 11.7       
 eps = epsilon_r * epsilon_0
-n_i = 1.0e16           # Intrinsic carrier concentration (m^-3)
-N_D = 1.0e21           # Uniform donor concentration (m^-3) (adjust as needed)
-thermal_voltage = k_B * T / q  # (V)
+n_i = 1.0e16        
+N_D = 1.0e21        
+thermal_voltage = k_B * T / q 
 
 
 def build_interval_space(mesh_size: int, device_length: float):
@@ -134,9 +109,6 @@ def solve_poisson_boltzmann(mesh_size: int = 200, device_length: float = 100e-9,
     if MPI.COMM_WORLD.rank == 0:
         _plot_poisson_solution(V_space, Vh, rho_h, device_length, title_prefix="Boltzmann")
     return Vh
-
-
-
 
 
 
