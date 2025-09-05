@@ -10,25 +10,53 @@ Mimics:
 
 Outputs PNG + JSON in examples/outputs/nanonet_style by default.
 """
-import os, json, numpy as np, argparse
+import os, sys, json, numpy as np, argparse
+
+# -----------------------------------------------------------------------------
+# Make the script runnable from ANY working directory (no PYTHONPATH export):
+# Insert the 'src' directory (parent of the 'hamiltonian' package) into sys.path.
+# examples/  -> hamiltonian/ -> src/ (we need src on sys.path)
+# -----------------------------------------------------------------------------
+_HERE = os.path.abspath(os.path.dirname(__file__))
+_SRC_ROOT = os.path.abspath(os.path.join(_HERE, '..', '..'))  # points to .../src
+if _SRC_ROOT not in sys.path:
+    sys.path.insert(0, _SRC_ROOT)
+
 from hamiltonian import Hamiltonian
 
-DEFAULT_OUTDIR = os.path.join(os.path.dirname(__file__), 'outputs', 'nanonet_style')
+DEFAULT_OUTDIR = os.path.join(_HERE, 'outputs', 'nanonet_style')
 SINW2_CANDIDATES = [
+    # Local copy placed directly in examples folder (user request)
+    os.path.join(_HERE, 'SiNW2.xyz'),
+    # Paths relative to repository root
     os.path.join('resources','Nanonet','NanoNet','examples','input_samples','SiNW2.xyz'),
     os.path.join('resources','Nanonet','NanoNet','nanonet','SiNW2.xyz'),
     os.path.join('Si_transmission','input_samples','SiNW2.xyz')
 ]
 
 def locate_xyz(explicit=None):
+    """Locate SiNW2.xyz.
+
+    Priority:
+      1. Explicit path via --xyz
+      2. Local examples/SiNW2.xyz
+      3. Known repository relative locations (searched from repo root)
+    """
     if explicit and os.path.exists(explicit):
         return explicit
-    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..','..','..','..'))
+    # First candidate may already be absolute (examples folder)
+    for cand in SINW2_CANDIDATES:
+        if os.path.isabs(cand) and os.path.exists(cand):
+            return cand
+    # Resolve repo root (two levels above src/hamiltonian/examples -> root/)
+    repo_root = os.path.abspath(os.path.join(_HERE, '..','..','..','..'))
     for rel in SINW2_CANDIDATES:
+        if os.path.isabs(rel):
+            continue
         cand = os.path.join(repo_root, rel)
         if os.path.exists(cand):
             return cand
-    raise FileNotFoundError('SiNW2.xyz not found; supply with --xyz')
+    raise FileNotFoundError('SiNW2.xyz not found; place it in examples/ or supply with --xyz')
 
 def compute_bands(xyz, num_points, nn=2.4, a_si=5.50, kmax=0.57):
     H = Hamiltonian(xyz=xyz, nn_distance=nn).initialize()
@@ -57,9 +85,12 @@ def plot_split(kk, bands, out_png):
     plt.axhline(0.0, color='grey', linewidth=0.6, linestyle='--')
     plt.xlabel('k_z (1/Ang)')
     plt.ylabel('Energy (eV)')
+    plt.ylim((-3, 5))
     plt.title('SiNW2 Band Structure (NanoNet style)')
     plt.tight_layout()
+
     plt.savefig(out_png, dpi=160)
+
     plt.close()
 
 def main():

@@ -7,5 +7,5 @@ sympy_testing/
 src/archive/
 src/NEGF/test
 src/FEM/
-src/FEM/NEGF/
-src/FEM/NEGF_nanowire/
+src/NEGF/
+src/NEGF_nanowire/

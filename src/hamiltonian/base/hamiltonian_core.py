@@ -9,6 +9,7 @@ from ..geometry.structure_designer import StructDesignerXYZ, CyclicTopology
 from ..tb.diatomic_matrix_element import me
 from ..tb.orbitals import Orbitals
 from ..io.xyz import dict2xyz
+from ..geometry.si_nanowire_generator import generate_sinw_xyz
 
 unique_distances = set()
 
@@ -50,8 +51,21 @@ class Hamiltonian(BasisTB):
         self.compute_overlap = kwargs.get('comp_overlap', False)
         self.compute_angular = kwargs.get('comp_angular_dep', True)
         kwargs['nn_distance'] = nn_distance
-        if not isinstance(kwargs['xyz'], str):
-            kwargs['xyz'] = dict2xyz(kwargs['xyz'])
+        # Accept either an xyz string/path, dict-form, or nanowire generator params
+        if 'xyz' in kwargs and kwargs['xyz'] is not None:
+            if not isinstance(kwargs['xyz'], str):
+                kwargs['xyz'] = dict2xyz(kwargs['xyz'])
+        else:
+            # Attempt parametric nanowire generation if nx,ny,nz provided
+            nx = kwargs.get('nx'); ny = kwargs.get('ny'); nz = kwargs.get('nz')
+            if None not in (nx, ny, nz):
+                a = kwargs.get('a', 5.50)
+                periodic_dirs = kwargs.get('periodic_dirs', 'z')
+                passivate_x = kwargs.get('passivate_x', True)
+                kwargs['xyz'] = generate_sinw_xyz(nx=nx, ny=ny, nz=nz, a=a, periodic_dirs=periodic_dirs, passivate_x=passivate_x,
+                                                  title=f'Generated SiNW nx={nx} ny={ny} nz={nz} a={a}')
+            else:
+                raise ValueError('Provide either xyz (string/path/dict) or nanowire parameters nx, ny, nz.')
         super(Hamiltonian, self).__init__(**kwargs)
         self._coords = None
         self.h_matrix = None
