@@ -98,7 +98,14 @@ class SiNWGenerator:
                     if (x >= -tol and x <= x_max + tol and  z >= -tol and z <= z_max + tol ):
                         continue
                     if (y < 0):
-                        add[1] += y_max                
+                        add[1] += y_max        
+                
+                
+                if passivate_x == False:
+                    if (periodic_dirs == 'y'):
+                        if (z >= -tol and z <= z_max + tol):
+                            continue
+                            
                         
                 
                 h_pos = pos_v + d_norm * SI_H_BOND_LENGTH + add
@@ -131,8 +138,8 @@ class SiNWGenerator:
                 f.write(f"{lab:<4}{x:11.6f}{y:11.6f}{z:11.6f}\n")
 
 def test_parametric():
-    nw=SiNWGenerator.generate()
-    SiNWGenerator.write_xyz(nw,'SiNW2_copy.xyz')
+    nw=SiNWGenerator.generate(3, 1, 2, periodic_dirs='y', passivate_x=False)
+    SiNWGenerator.write_xyz(nw,'SiNW2_special.xyz')
     print('Generated (2,2,1):', len(nw.si_positions),'Si', len(nw.h_positions),'H')
 
 if __name__=='__main__':

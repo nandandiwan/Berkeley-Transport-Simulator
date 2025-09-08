@@ -1,1 +1,0 @@
-# Band structure calculation utilities
