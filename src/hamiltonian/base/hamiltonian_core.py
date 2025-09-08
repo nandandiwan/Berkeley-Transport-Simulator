@@ -6,6 +6,10 @@ import logging, inspect
 import numpy as np, scipy
 from .abstract_interfaces import AbstractBasis
 from ..geometry.structure_designer import StructDesignerXYZ, CyclicTopology
+try:
+    from ..geometry.open_system_designer import OpenSystemDesigner
+except Exception:
+    OpenSystemDesigner = object  # type: ignore
 from ..tb.diatomic_matrix_element import me
 from ..tb.orbitals import Orbitals
 from ..io.xyz import dict2xyz
@@ -77,6 +81,8 @@ class Hamiltonian(BasisTB):
         self.h_matrix_right_lead = None
         self.k_vector = 0
         self.ct = None
+        self.open_system = None  # OpenSystemDesigner instance when using open BC
+        self._bc_mode = None     # 'periodic' | 'open' | None
         self.radial_dependence = None
         self.so_coupling = kwargs.get('so_coupling', 0.0)
         radial_dep = kwargs.get('radial_dep', None)
@@ -117,6 +123,25 @@ class Hamiltonian(BasisTB):
             self.ct = CyclicTopology(primitive_cell, list(self.atom_list.keys()), list(self.atom_list.values()), self._nn_distance)
         else:
             self.ct = None
+        self.open_system = None
+        self._bc_mode = 'periodic'
+
+    # Unified BC setter: accept either a CyclicTopology (periodic) or an OpenSystemDesigner (open)
+    def set_bc(self, bc):
+        """Set boundary conditions.
+        - If bc is a CyclicTopology: periodic BC along given primitive cell(s).
+        - If bc is an OpenSystemDesigner: open (finite) device with L/D/R partitions.
+        """
+        if isinstance(bc, CyclicTopology):
+            self.ct = bc
+            self.open_system = None
+            self._bc_mode = 'periodic'
+        elif isinstance(bc, OpenSystemDesigner):
+            self.open_system = bc
+            self.ct = None
+            self._bc_mode = 'open'
+        else:
+            raise TypeError("bc must be a CyclicTopology or OpenSystemDesigner instance")
     def diagonalize(self):
         if self.compute_overlap:
             vals, vects = scipy.linalg.eigh(self.h_matrix, self.ov_matrix)
@@ -125,11 +150,6 @@ class Hamiltonian(BasisTB):
         vals = np.real(vals)
         ind = np.argsort(vals)
         return vals[ind], vects[:, ind]
-    def set_periodic_bc(self, primitive_cell):
-        if list(primitive_cell):
-            self.ct = CyclicTopology(primitive_cell, list(self.atom_list.keys()), list(self.atom_list.values()), self._nn_distance)
-        else:
-            self.ct = None
     def _reset_periodic_bc(self):
         self.h_matrix_bc_add = np.zeros((self.basis_size, self.basis_size), dtype=complex)
         if self.compute_overlap:
@@ -148,32 +168,86 @@ class Hamiltonian(BasisTB):
                             ind1 = self.qn2ind([('atoms', j1), ('l', l1)])
                             ind2 = self.qn2ind([('atoms', j2), ('l', l2)])
                             self.h_matrix_bc_factor[ind1, ind2] = phase
-    def _compute_h_matrix_bc_add(self, overlap=False):
-        if self.ct is None: return
-        for j1 in self.ct.interfacial_atoms_ind:
-            list_of_neighbours = self.ct.get_neighbours(list(self.atom_list.values())[j1])
-            for j2 in list_of_neighbours:
-                coords = np.array(list(self.atom_list.values())[j1]) - np.array(list(self.ct.virtual_and_interfacial_atoms.values())[j2])
-                phase = np.exp(1j * np.dot(self.k_vector, coords))
-                key = list(self.ct.virtual_and_interfacial_atoms.keys())[j2]
-                parts = key.split('_')
-                # Key patterns:
-                #   Real/interfacial: "<j>_<Label>"  -> index at parts[0]
-                #   Virtual 1st order: "*_<count>_<j>_<Label>" -> index at parts[2]
-                #   Virtual 2nd order: "**_<count>_<j>_<Label>" -> index at parts[2]
-                if key.startswith('*'):
-                    if len(parts) < 3:
-                        raise ValueError(f"Unexpected virtual atom key pattern: {key}")
-                    ind = int(parts[2])
-                else:
-                    ind = int(parts[0])
-                for l1 in range(self.orbitals_dict[list(self.atom_list.keys())[j1]].num_of_orbitals):
-                    for l2 in range(self.orbitals_dict[list(self.atom_list.keys())[ind]].num_of_orbitals):
-                        ind1 = self.qn2ind([('atoms', j1), ('l', l1)])
-                        ind2 = self.qn2ind([('atoms', ind), ('l', l2)])
-                        self.h_matrix_bc_add[ind1, ind2] += phase * self._get_me(j1, ind, l1, l2, coords=coords)
+    def _compute_h_matrix_bc_add(self, overlap=False, split_the_leads: bool = False):
+        """Augment Hamiltonian with boundary-condition-induced terms.
+        For periodic BC (CyclicTopology): populate h_matrix_bc_add (and overlap) and optionally
+        split couplings to left/right lead coupling holders when split_the_leads=True.
+        For open BC (OpenSystemDesigner): no BC additions to H, but if split_the_leads=True,
+        populate h_matrix_left_lead/right_lead from L-D and D-R interface couplings.
+        """
+        # Periodic BC via CyclicTopology
+        if self.ct is not None:
+            for j1 in self.ct.interfacial_atoms_ind:
+                list_of_neighbours = self.ct.get_neighbours(list(self.atom_list.values())[j1])
+                for j2 in list_of_neighbours:
+                    coords = np.array(list(self.atom_list.values())[j1]) - np.array(list(self.ct.virtual_and_interfacial_atoms.values())[j2])
+                    phase = np.exp(1j * np.dot(self.k_vector, coords)) if self.k_vector is not None else 1.0
+                    key = list(self.ct.virtual_and_interfacial_atoms.keys())[j2]
+                    parts = key.split('_')
+                    # Key patterns:
+                    #   Real/interfacial: "<j>_<Label>"  -> index at parts[0]
+                    #   Virtual 1st order: "*_<count>_<j>_<Label>" -> index at parts[2]
+                    #   Virtual 2nd order: "**_<count>_<j>_<Label>" -> index at parts[2]
+                    if key.startswith('*'):
+                        if len(parts) < 3:
+                            raise ValueError(f"Unexpected virtual atom key pattern: {key}")
+                        ind = int(parts[2])
+                    else:
+                        ind = int(parts[0])
+                    for l1 in range(self.orbitals_dict[list(self.atom_list.keys())[j1]].num_of_orbitals):
+                        for l2 in range(self.orbitals_dict[list(self.atom_list.keys())[ind]].num_of_orbitals):
+                            ind1 = self.qn2ind([('atoms', j1), ('l', l1)])
+                            ind2 = self.qn2ind([('atoms', ind), ('l', l2)])
+                            val = phase * self._get_me(j1, ind, l1, l2, coords=coords)
+                            self.h_matrix_bc_add[ind1, ind2] += val
+                            if overlap and self.compute_overlap:
+                                self.ov_matrix_bc_add[ind1, ind2] += phase * self._get_me(j1, ind, l1, l2, coords=coords, overlap=True)
+                            # Optionally split the couplings to left/right lead buffers
+                            if split_the_leads:
+                                try:
+                                    # Classify which semi-infinite side this virtual neighbour belongs to
+                                    side = None
+                                    if hasattr(self.ct, 'pcv') and len(np.atleast_2d(self.ct.pcv)) >= 1:
+                                        side = self.ct.atom_classifier(list(self.ct.virtual_and_interfacial_atoms.values())[j2], self.ct.pcv[0])
+                                except Exception:
+                                    side = None
+                                if side == 'L':
+                                    self.h_matrix_left_lead[ind1, ind2] += val
+                                elif side == 'R':
+                                    self.h_matrix_right_lead[ind1, ind2] += val
+            return
+
+        # Open-system BC via OpenSystemDesigner: only split the L/D and D/R interface couplings
+        if self.open_system is not None and split_the_leads:
+            osd = self.open_system
+            parts = osd.build_partitions()
+            side = np.empty(len(self.atom_list), dtype='U1')
+            side[parts.L] = 'L'; side[parts.D] = 'D'; side[parts.R] = 'R'
+            edges = osd.classify_edges()
+            # Helper to add couplings between atoms a and b into target (left/right) matrices
+            def add_coupling(a, b, target):
+                for l1 in range(self.orbitals_dict[list(self.atom_list.keys())[a]].num_of_orbitals):
+                    for l2 in range(self.orbitals_dict[list(self.atom_list.keys())[b]].num_of_orbitals):
+                        ind1 = self.qn2ind([('atoms', a), ('l', l1)])
+                        ind2 = self.qn2ind([('atoms', b), ('l', l2)])
+                        val = self._get_me(a, b, l1, l2)
+                        target[ind1, ind2] += val
                         if overlap and self.compute_overlap:
-                            self.ov_matrix_bc_add[ind1, ind2] += phase * self._get_me(j1, ind, l1, l2, coords=coords, overlap=True)
+                            self.ov_matrix_bc_add[ind1, ind2] += self._get_me(a, b, l1, l2, overlap=True)
+            # LD interface goes to left lead
+            for (i, j) in edges.get('LD', []):
+                # Ensure direction: (device, lead)
+                if side[i] == 'D' and side[j] == 'L':
+                    add_coupling(i, j, self.h_matrix_left_lead)
+                elif side[i] == 'L' and side[j] == 'D':
+                    add_coupling(j, i, self.h_matrix_left_lead)
+            # DR interface goes to right lead
+            for (i, j) in edges.get('DR', []):
+                if side[i] == 'D' and side[j] == 'R':
+                    add_coupling(i, j, self.h_matrix_right_lead)
+                elif side[i] == 'R' and side[j] == 'D':
+                    add_coupling(j, i, self.h_matrix_right_lead)
+            return
     def diagonalize_k(self, k_vector):
         k_vector = list(k_vector)
         if k_vector != self.k_vector:
@@ -239,3 +313,22 @@ class Hamiltonian(BasisTB):
                 factor = self.radial_dependence(norm)
             coords1 /= norm
             return me(atom_kind1, l1, atom_kind2, l2, coords1, which_neighbour, overlap=overlap) * factor
+        
+    def get_hamiltonians(self):
+        """Return (Hl, H0, Hr) where Hl and Hr collect couplings to left/right principal layers.
+        For periodic BC, this mirrors NanoNet's behavior by classifying virtual-neighbour couplings.
+        For open BC, Hl/Hr are built from OpenSystemDesigner L-D and D-R interfaces.
+        """
+        # Initialize lead coupling holders
+        self.h_matrix_left_lead = np.zeros((self.basis_size, self.basis_size), dtype=complex)
+        self.h_matrix_right_lead = np.zeros((self.basis_size, self.basis_size), dtype=complex)
+        # Use zero k-vector for consistent coupling extraction
+        old_k = self.k_vector
+        self.k_vector = [0.0, 0.0, 0.0]
+        # Populate according to current BC mode
+        self._compute_h_matrix_bc_add(split_the_leads=True)
+        # Reset state
+        self.k_vector = old_k
+        # Return couplings transposed to match expected orientation in downstream code
+        return self.h_matrix_left_lead.T, self.h_matrix, self.h_matrix_right_lead.T
+        
