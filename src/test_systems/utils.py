@@ -507,7 +507,7 @@ def gaussian_broadening_interpolation(atom_pos : list[Atom], values : np.ndarray
                 spacings.append((ax[-1] - ax[0]) / (ax.size - 1))
         sigma = float(np.mean(spacings)) if spacings else 1e-12
 
-    cutoff = 3.5  # truncate Gaussian at ~3.5 sigma (~0.00087 tail mass)
+    cutoff = 2.5  # truncate Gaussian at ~3.5 sigma (~0.00087 tail mass)
     inv_two_sigma2 = 1.0 / (2.0 * sigma * sigma)
 
     # Output grid

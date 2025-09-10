@@ -9,8 +9,6 @@ import numpy as np
 import scipy.sparse as sp
 import scipy.constants as spc
 from unit_cell_generation import GrapehenearmchairCell
-from src.tight_binding import tight_binding_params as TBP
-from tight_binding_helper import SiNWGenerator, PeriodicTB
 
 
 class Hamiltonian:
@@ -94,21 +92,6 @@ class Hamiltonian:
         self.ham_generator = None
             
         
-        
-        self.si_thickness = 2
-        self.U_orb_to_sp3 = 0.5*np.array([[1, 1, 1, 1],
-                                    [1, 1,-1,-1],
-                                    [1,-1, 1,-1],
-                                    [1,-1,-1, 1]])
-        self.U_sp3_to_orb = self.U_orb_to_sp3.T  
-        
-        Es = TBP.E['s']
-        Ep = TBP.E['px'] 
-        a = (Es + 3*Ep)/4.0
-        b = (Es -   Ep)/4.0
-        H_sp3_explicit = np.full((4,4), b)
-        np.fill_diagonal(H_sp3_explicit, a)
-        self.H_sp3_explicit = H_sp3_explicit
         
         self.mock_potential = False # True until poisson solver is in place
         self.middle_third = False # there's a sort of 

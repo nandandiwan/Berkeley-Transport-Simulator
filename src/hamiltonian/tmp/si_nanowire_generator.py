@@ -41,6 +41,7 @@ class GeneratedNW:
             lines.append(f"{lab} {x:.6f} {y:.6f} {z:.6f}")
         return '\n'.join(lines)+'\n'
 
+
 class SiNWGenerator:
     @staticmethod
     def _build_si(nx,ny,nz,a,periodic_dirs:str):
@@ -98,14 +99,19 @@ class SiNWGenerator:
                     if (x >= -tol and x <= x_max + tol and  z >= -tol and z <= z_max + tol ):
                         continue
                     if (y < 0):
-                        add[1] += y_max        
-                
-                
-                if passivate_x == False:
-                    if (periodic_dirs == 'y'):
-                        if (z >= -tol and z <= z_max + tol):
-                            continue
-                            
+                        add[1] += y_max     
+                elif (periodic_dirs == 'x'):
+                    if (y >= -tol and y <= y_max + tol and  z >= -tol and z <= z_max + tol ):
+                        continue
+                    if (x < 0):
+                        add[0] += x_max    
+                elif (periodic_dirs == 'xy'):
+                    if (z >= -tol and z <= z_max + tol ):
+                        continue
+                    if (y < 0):
+                        add[1] += y_max
+                    if (x < 0):
+                        add[0] += x_max    
                         
                 
                 h_pos = pos_v + d_norm * SI_H_BOND_LENGTH + add
@@ -138,7 +144,7 @@ class SiNWGenerator:
                 f.write(f"{lab:<4}{x:11.6f}{y:11.6f}{z:11.6f}\n")
 
 def test_parametric():
-    nw=SiNWGenerator.generate(3, 1, 2, periodic_dirs='y', passivate_x=False)
+    nw=SiNWGenerator.generate(1, 1, 2, periodic_dirs='xy', passivate_x=False)
     SiNWGenerator.write_xyz(nw,'SiNW2_special.xyz')
     print('Generated (2,2,1):', len(nw.si_positions),'Si', len(nw.h_positions),'H')
 

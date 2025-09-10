@@ -11,7 +11,7 @@ from typing import Optional, Tuple
 import matplotlib.pyplot as plt
 from hamiltonian import Hamiltonian  
 from rgf import GreensFunction  
-
+import utils
 
 
 q = 1.602e-19        
@@ -167,6 +167,7 @@ class PoissonNEGFProblem(dolfinx.fem.petsc.NonlinearProblem):
         return np.interp(self.site_positions, self.dof_x, V_nodes)
 
     def _map_sites_to_nodes(self, arr_sites: np.ndarray) -> np.ndarray:
+        
         return np.interp(self.dof_x, self.site_positions, arr_sites)
 
     def F(self, x: PETSc.Vec, b: PETSc.Vec):  # type: ignore[override]
@@ -176,12 +177,11 @@ class PoissonNEGFProblem(dolfinx.fem.petsc.NonlinearProblem):
         V_nodes = self._u.x.array
         V_sites = self._map_nodes_to_sites(V_nodes)
         # Compute electron density (#/m^3) from NEGF
-        try:
-            n_sites = self.gf.get_n(V=V_sites, Efn=self.Efn, Ec=self.Ec, processes=1)
-        except Exception:
-            n_sites = n_i * np.ones_like(V_sites)
+        
+        n_sites = self.gf.get_n(V=V_sites, Efn=self.Efn, Ec=self.Ec, processes=1)
+        
         n_nodes = self._map_sites_to_nodes(n_sites)
-        rho_nodes = q * (N_D - n_nodes)
+        rho_nodes = q * (- n_nodes)*1e23
         self._rho.x.array[:] = rho_nodes
         self._rho.x.scatter_forward()
         super().F(x, b)
@@ -190,12 +190,11 @@ class PoissonNEGFProblem(dolfinx.fem.petsc.NonlinearProblem):
         # Optional: could incorporate approximate derivative; currently placeholder
         V_nodes = self._u.x.array
         V_sites = self._map_nodes_to_sites(V_nodes)
-        try:
-            dn_dV_sites = self.gf.diff_rho_poisson(Efn=self.Efn, V=V_sites, Ec=self.Ec, processes=1)
-        except Exception:
-            dn_dV_sites = np.zeros_like(V_sites)
+        
+        dn_dV_sites = self.gf.diff_rho_poisson(Efn=self.Efn, V=V_sites, Ec=self.Ec, processes=1)
+
         # Charge derivative: d rho / d V = - q * dn/dV
-        drho_dV_nodes = -q * self._map_sites_to_nodes(dn_dV_sites)
+        drho_dV_nodes = -q * self._map_sites_to_nodes(dn_dV_sites)*1e23
         self._drho_dv.x.array[:] = drho_dV_nodes
         self._drho_dv.x.scatter_forward()
         super().J(x, A)

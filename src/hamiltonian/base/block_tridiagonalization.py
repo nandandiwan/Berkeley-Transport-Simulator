@@ -40,14 +40,8 @@ def blocksandborders_constrained(left_block, right_block, edge, edge1):
         return [size]
 
 def compute_blocks(left_block, right_block, edge, edge1):
-    size = len(edge); ans = blocksandborders_constrained(left_block, right_block, edge, edge1)
-    if len(ans) > 2:
-        for j, block in enumerate(ans[1:-1]):
-            left_block = block; right_block = ans[j + 2]
-            ans1 = compute_blocks(left_block, right_block,
-                                  edge[sum(ans[:j + 1]):sum(ans[:j + 2])] - sum(ans[:j + 1]),
-                                  edge1[sum(ans[:j + 1]):sum(ans[:j + 2])] - sum(ans[:j + 1]))
-            ans[j + 1] = ans1
+    size = len(edge)
+    ans = blocksandborders_constrained(left_block, right_block, edge, edge1)
     return ans
 
 def find_nonzero_lines(mat, order):
