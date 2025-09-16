@@ -44,32 +44,78 @@ class BasisTB(AbstractBasis, StructDesignerXYZ):
                 return super(MyDict, self).__getitem__(key)
         return MyDict(self._orbitals_dict)
 
-def sort_by_coordinate(coords, **kwargs):
-    """Sorting function that sorts atoms based on a specified coordinate axis."""
-    axis = kwargs.get('axis', 0)
-    return np.argsort(coords[:, axis], kind='mergesort')
+def sort_by_coordinate(coords, left_lead=None, right_lead=None, mat=None, axis=0, **kwargs):
+    """Stable sort by a coordinate axis compatible with StructDesignerXYZ.
+
+    Parameters
+    ----------
+    coords : np.ndarray (N x 3)
+        Cartesian coordinates of atoms.
+    left_lead, right_lead : sequence[int] | None
+        Provided for API compatibility; not used by the default sorter.
+    mat : np.ndarray (N x N) | None
+        Connectivity/adjacency matrix; not used by the default sorter.
+    axis : int, optional (default: 0)
+        Axis index to sort along: `0 -> x`, `1 -> y`, `2 -> z`.
+
+    Returns
+    -------
+    np.ndarray (N,)
+        Indices that sort `coords` stably along the requested axis.
+    """
+    return np.argsort(np.asarray(coords)[:, axis], kind='mergesort')
 
 class Hamiltonian(BasisTB):
     def __init__(self, **kwargs):
         self.nn_distance = kwargs.get('nn_distance', 2.39)
+        self.periodic_dirs = kwargs.get('periodic_dirs')
         self.int_radial_dependence = None
 
         self.compute_overlap = kwargs.get('comp_overlap', False)
         self.compute_angular = kwargs.get('comp_angular_dep', True)
         kwargs['nn_distance'] = self.nn_distance
 
-        self.transport_dir = kwargs.get('transport_dir', [1, 0, 0])
-        self.transport_axis = np.argmax(np.abs(np.array(self.transport_dir)))
-
+        self.transport_dir = tuple(kwargs.get('transport_dir', [1, 0, 0]))
+        # Robust transport axis detection: accept unit basis tuples or any vector.
+        if self.transport_dir in ((1, 0, 0), (0, 1, 0), (0, 0, 1)):
+            self.transport_axis = (0, 1, 2)[((1,0,0), (0,1,0), (0,0,1)).index(self.transport_dir)]
+        else:
+            self.transport_axis = int(np.argmax(np.abs(np.array(self.transport_dir, dtype=float))))
         # Store generator parameters for later use
         self.nx = kwargs.get('nx', None)
         self.ny = kwargs.get('ny', None)
         self.nz = kwargs.get('nz', None)
 
-        # Add the sorter to kwargs for the block partitioning case
-        kwargs['sort_func'] = lambda coords, **kws: sort_by_coordinate(
-            coords, axis=self.transport_axis, **kws
-        )
+        # Sorting: allow a user-provided sort function; otherwise default to axis-based.
+        # Default: sort along TRANSPORT axis. You can override with:
+        # - sort_axis=int (0/1/2)
+        # - sort_axis in {'x','y','z','transport','periodic'}
+        # If 'periodic' is chosen and a single periodic axis is specified, that axis is used; otherwise falls back to transport.
+        periodic_dirs_cfg = kwargs.get('periodic_dirs', None)
+        sort_axis_override = kwargs.get('sort_axis', None)
+        axes_map = {'x': 0, 'y': 1, 'z': 2}
+        default_axis = self.transport_axis
+        if sort_axis_override is not None:
+            if isinstance(sort_axis_override, str):
+                key = sort_axis_override.lower()
+                if key in axes_map:
+                    default_axis = axes_map[key]
+                elif key == 'transport':
+                    default_axis = self.transport_axis
+                elif key == 'periodic' and isinstance(periodic_dirs_cfg, str):
+                    chars = [axes_map[c] for c in periodic_dirs_cfg.lower() if c in axes_map]
+                    if len(chars) == 1:
+                        default_axis = chars[0]
+            else:
+                default_axis = int(sort_axis_override)
+        sort_func = kwargs.get('sort_func', None)
+        if sort_func is None:
+            sort_func = lambda coords, **kws: sort_by_coordinate(
+                coords, axis=default_axis, **kws
+            )
+        elif not callable(sort_func):
+            raise TypeError("sort_func must be callable with signature (coords: ndarray, **kwargs) -> index array")
+        kwargs['sort_func'] = sort_func
 
         # Accept either an xyz string/path, dict-form, or nanowire generator params
         if 'xyz' in kwargs and kwargs['xyz'] is not None:
@@ -102,7 +148,8 @@ class Hamiltonian(BasisTB):
         self.so_coupling = kwargs.get('so_coupling', 0.0)
 
     def initialize(self):
-        # ... (no changes needed in this method)
+        # Build matrices using the current structure order. Sorting, if any,
+        # is performed during StructDesignerXYZ.__init__ via `sort_func`.
         self._coords = [0 for _ in range(self.basis_size)]
         self.h_matrix = np.zeros((self.basis_size, self.basis_size), dtype=complex)
         self.h_matrix_bc_add = np.zeros((self.basis_size, self.basis_size), dtype=complex)
@@ -197,6 +244,21 @@ class Hamiltonian(BasisTB):
 
 
         logging.info("Operating in Periodic Transport mode (num_layers=1).")
+        # Guard: periodic-transport mode requires transport_dir to align with a primitive cell vector.
+        if self.ct is None or not hasattr(self.ct, 'pcv'):
+            raise RuntimeError("Periodic cell not set. Call set_periodic_bc(primitive_cell) before get_hamiltonians().")
+        tdir = np.array(self.transport_dir, dtype=float).flatten()
+        if np.linalg.norm(tdir) == 0:
+            raise ValueError("transport_dir must be non-zero.")
+        tdir /= np.linalg.norm(tdir)
+        dots = [abs(np.dot(tdir, vec/np.linalg.norm(vec))) for vec in self.ct.pcv]
+        max_dot = max(dots) if len(dots) else 0.0
+        if max_dot < 0.95:
+            raise ValueError(
+                "In periodic-transport mode, transport_dir must align with a primitive cell vector. "
+                f"Max alignment found: {max_dot:.3f}. Either (1) set periodic_dirs to include the transport axis, "
+                "or (2) construct a finite device along the transport axis (num_layers>1) and use layer partitioning."
+            )
         self.h_matrix_left_lead = np.zeros((self.basis_size, self.basis_size), dtype=complex)
         self.h_matrix_right_lead = np.zeros((self.basis_size, self.basis_size), dtype=complex)
         old_k = self.k_vector
@@ -204,12 +266,49 @@ class Hamiltonian(BasisTB):
         self._compute_h_matrix_bc_add(split_the_leads=True, transport_dir=self.transport_dir)
         self.k_vector = old_k
         return self.h_matrix_left_lead.T, self.h_matrix, self.h_matrix_right_lead.T
-
     def _ind2atom(self, ind):
-        return self.orbitals_dict[list(self.atom_list.keys())[ind]] 
+        return self.orbitals_dict[list(self.atom_list.keys())[ind]]
+    def determine_leads(self, tol: float = 1e-3, choose: str = 'center', rewrite_h: bool = False):
+        if self.h_matrix is None:
+            raise ValueError("initialize")
+        ham_d = self.h_matrix
+        old_size = ham_d.shape[0]
+        # Build a 2-cell finite chain along transport to extract a single principal-layer and its coupling
+        # Remove transport axis from periodic_dirs so we get an open chain along x
+        pdirs = '' if self.periodic_dirs is None else str(self.periodic_dirs)
+        axes_map = {'x':0,'y':1,'z':2}
+        inv_axes = {0:'x',1:'y',2:'z'}
+        t_axis_char = inv_axes.get(self.transport_axis, 'x')
+        pdirs_nx = ''.join(ch for ch in pdirs if ch != t_axis_char)
+        if pdirs_nx == '':
+            pdirs_nx = None
+        new_device = Hamiltonian(nx = 2, ny = self.ny, nz=self.nz, periodic_dirs = self.periodic_dirs, passivate_x=False, nn_distance=2.4, transport_dir=[1,0,0], sort_axis='transport')
+        new_device.initialize()
+        hL = new_device.h_matrix
+        size = hL.shape[0]
+        hL0 = hL[:size//2, :size//2]
+        hLC = hL[:size//2, size//2:size]
+        ham_new = np.zeros((old_size + size, old_size + size), dtype=complex)
+        ham_new[:size//2, :size//2] = hL0
+        ham_new[:size//2, size//2:size] = hLC
+        ham_new[size//2:size, :size//2] = np.conjugate(hLC.T)
+        
+        ham_new[size//2:-size//2, size//2:-size//2] = ham_d
+        
+        
+        ham_new[-size//2:, -size//2:] = hL0
+        ham_new[-size//2:, -size:-size//2] = np.conjugate(hLC.T)
+        ham_new[-size:-size//2, -size//2:] = hLC
+
+        # Prepare right-lead onsite and coupling blocks
+        hR0 = hL0.copy()
+        hRC = np.conjugate(hLC.T)  
+
+        return ham_new, hL0, hLC, hR0, hRC
+        
     # --- Other methods (diagonalize, _get_me, etc.) are unchanged ---
     def _get_me(self, atom1, atom2, l1, l2, coords=None, overlap=False):
-        # ... (no changes needed in this method)
+
         if atom1 == atom2 and coords is None:
             atom_obj = self._ind2atom(atom1)
             if l1 == l2:
@@ -227,7 +326,7 @@ class Hamiltonian(BasisTB):
             return me(atom_kind1, l1, atom_kind2, l2, coords1, which_neighbour, overlap=overlap) * factor
 
     def diagonalize_k(self, k_vector):
-        # ... (no changes needed in this method)
+
         k_vector = list(k_vector)
         if k_vector != self.k_vector:
             self._reset_periodic_bc()
@@ -243,3 +342,5 @@ class Hamiltonian(BasisTB):
         vals = np.real(vals)
         ind = np.argsort(vals)
         return vals[ind], vects[:, ind]
+    
+

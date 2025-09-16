@@ -39,3 +39,4 @@ def recursive_gf(energy, mat_l_list, mat_d_list, mat_u_list, left_se=None, right
     if isinstance(right_se, np.ndarray):
         mat_d_list[-1]=mat_d_list[-1]-right_se
     return ans
+

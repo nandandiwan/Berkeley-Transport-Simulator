@@ -96,7 +96,10 @@ class SiNWGenerator:
                         add[2] += z_max
                 elif (periodic_dirs == 'y'):
                     if (x >= -tol and x <= x_max + tol and  z >= -tol and z <= z_max + tol ):
-                        continue
+                        continue                        
+                    if (not passivate_x):
+                            if (x<= -tol or x > x_max - tol) and  z >= -tol and z <= z_max + tol:
+                                continue
                     if (y < 0):
                         add[1] += y_max     
                 elif (periodic_dirs == 'x'):
@@ -110,7 +113,12 @@ class SiNWGenerator:
                     if (y < 0):
                         add[1] += y_max
                     if (x < 0):
-                        add[0] += x_max    
+                        add[0] += x_max   
+                        
+                
+                if  y >= -tol and y <= y_max + tol and  z >= -tol and z <= z_max + tol and (x < -tol or x > x_max - tol):
+                    if not passivate_x:
+                        continue
                         
                 
                 h_pos = pos_v + d_norm * SI_H_BOND_LENGTH + add

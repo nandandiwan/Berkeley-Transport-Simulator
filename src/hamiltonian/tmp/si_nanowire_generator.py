@@ -144,7 +144,7 @@ class SiNWGenerator:
                 f.write(f"{lab:<4}{x:11.6f}{y:11.6f}{z:11.6f}\n")
 
 def test_parametric():
-    nw=SiNWGenerator.generate(1, 1, 2, periodic_dirs='xy', passivate_x=False)
+    nw=SiNWGenerator.generate(2, 1, 1, periodic_dirs='x', passivate_x=False)
     SiNWGenerator.write_xyz(nw,'SiNW2_special.xyz')
     print('Generated (2,2,1):', len(nw.si_positions),'Si', len(nw.h_positions),'H')
 

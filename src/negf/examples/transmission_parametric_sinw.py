@@ -32,14 +32,15 @@ def build_hamiltonian():
     Orbitals.orbital_sets = {"Si": "SiliconSP3D5S", "H": "HydrogenS"}
     # Parametric nanowire generator parameters
     a_si = 5.50
-    hamiltonian = Hamiltonian(nx=2, ny=2, nz=1, a=a_si, periodic_dirs='z', passivate_x=True, nn_distance=2.4, transport_dir=[0,0,1])
+    hamiltonian = Hamiltonian(nx=1, ny=1, nz=1, a=a_si, periodic_dirs='z', passivate_x=False, nn_distance=2.4, transport_dir=[0,0,1])
     hamiltonian.initialize()
-    
-    
-    a_si = 5.50
-    primitive_cell = [[0, 0,a_si]]
-    hamiltonian.set_periodic_bc(primitive_cell)
     hl, h0, hr = hamiltonian.get_hamiltonians()
+    hamiltonian2 = Hamiltonian(nx=1, ny=1, nz=1, a=a_si, periodic_dirs='z', passivate_x=True, nn_distance=2.4, transport_dir=[0,0,1])
+    hamiltonian2.initialize()
+    a_si = 5.50
+    primitive_cell = [[a_si,0,0]]
+    hamiltonian2.set_periodic_bc(primitive_cell)
+    hl, h02, hr = hamiltonian.get_hamiltonians()
     energy = np.linspace(2.1, 2.5, 50)
     damp = 0.001j
     tr = np.zeros(energy.shape)
