@@ -177,6 +177,7 @@ class Hamiltonian(BasisTB):
                             ind2 = self.qn2ind([('atoms', j2), ('l', l2)], )
                             self.h_matrix[ind1, ind2] = self._get_me(j1, j2, l1, l2)
                             if self.compute_overlap: self.ov_matrix[ind1, ind2] = self._get_me(j1, j2, l1, l2, overlap=True)
+        
         return self
 
     def set_periodic_bc(self, primitive_cell):
@@ -234,41 +235,44 @@ class Hamiltonian(BasisTB):
         1. Periodic Transport (e.g., nz=1): Defines leads from periodic cell connections.
         2. Finite Device (e.g., nz>1): Defines leads by partitioning the device into layers.
         """
+        
+        
         if self.transport_axis == 0: num_layers = self.nx
         elif self.transport_axis == 1: num_layers = self.ny
         elif self.transport_axis == 2: num_layers = self.nz
         else: raise ValueError("Invalid transport_axis")
 
-        if num_layers is None:
-            raise ValueError("Device dimensions (nx, ny, nz) not found. Cannot determine number of layers.")
-
-
-        logging.info("Operating in Periodic Transport mode (num_layers=1).")
         # Guard: periodic-transport mode requires transport_dir to align with a primitive cell vector.
         if self.ct is None or not hasattr(self.ct, 'pcv'):
-            raise RuntimeError("Periodic cell not set. Call set_periodic_bc(primitive_cell) before get_hamiltonians().")
-        tdir = np.array(self.transport_dir, dtype=float).flatten()
-        if np.linalg.norm(tdir) == 0:
-            raise ValueError("transport_dir must be non-zero.")
-        tdir /= np.linalg.norm(tdir)
-        dots = [abs(np.dot(tdir, vec/np.linalg.norm(vec))) for vec in self.ct.pcv]
-        max_dot = max(dots) if len(dots) else 0.0
-        if max_dot < 0.95:
-            raise ValueError(
-                "In periodic-transport mode, transport_dir must align with a primitive cell vector. "
-                f"Max alignment found: {max_dot:.3f}. Either (1) set periodic_dirs to include the transport axis, "
-                "or (2) construct a finite device along the transport axis (num_layers>1) and use layer partitioning."
-            )
-        self.h_matrix_left_lead = np.zeros((self.basis_size, self.basis_size), dtype=complex)
-        self.h_matrix_right_lead = np.zeros((self.basis_size, self.basis_size), dtype=complex)
-        old_k = self.k_vector
-        self.k_vector = [0.0, 0.0, 0.0]
-        self._compute_h_matrix_bc_add(split_the_leads=True, transport_dir=self.transport_dir)
-        self.k_vector = old_k
-        return self.h_matrix_left_lead.T, self.h_matrix, self.h_matrix_right_lead.T
+            mode = "open"
+        else:
+            mode = "perioidic"
+        
+        if mode == "perioidic":
+            tdir = np.array(self.transport_dir, dtype=float).flatten()
+            if np.linalg.norm(tdir) == 0:
+                raise ValueError("transport_dir must be non-zero.")
+            tdir /= np.linalg.norm(tdir)
+            dots = [abs(np.dot(tdir, vec/np.linalg.norm(vec))) for vec in self.ct.pcv]
+            max_dot = max(dots) if len(dots) else 0.0
+            if max_dot < 0.95:
+                raise ValueError(
+                    "In periodic-transport mode, transport_dir must align with a primitive cell vector. "
+                    f"Max alignment found: {max_dot:.3f}. Either (1) set periodic_dirs to include the transport axis, "
+                    "or (2) construct a finite device along the transport axis (num_layers>1) and use layer partitioning."
+                )
+            self.h_matrix_left_lead = np.zeros((self.basis_size, self.basis_size), dtype=complex)
+            self.h_matrix_right_lead = np.zeros((self.basis_size, self.basis_size), dtype=complex)
+            old_k = self.k_vector
+            self.k_vector = [0.0, 0.0, 0.0]
+            self._compute_h_matrix_bc_add(split_the_leads=True, transport_dir=self.transport_dir)
+            self.k_vector = old_k
+            return self.h_matrix_left_lead.T, self.h_matrix, self.h_matrix_right_lead.T
+        else:
+            return self.determine_leads()
     def _ind2atom(self, ind):
         return self.orbitals_dict[list(self.atom_list.keys())[ind]]
-    def determine_leads(self, tol: float = 1e-3, choose: str = 'center', rewrite_h: bool = False):
+    def determine_leads(self, tol: float = 1e-3, choose: str = 'center'):
         if self.h_matrix is None:
             raise ValueError("initialize")
         ham_d = self.h_matrix
@@ -343,4 +347,5 @@ class Hamiltonian(BasisTB):
         ind = np.argsort(vals)
         return vals[ind], vects[:, ind]
     
-
+    def get_device_dimensions(self):
+        return self.nx + 2, self.ny, self.nz
