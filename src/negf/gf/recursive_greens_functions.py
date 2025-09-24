@@ -110,7 +110,7 @@ def _direct_inverse(E, H, H00, H01, muL=0, muR=0):
 
     G_R_diag = np.diag(G_R)
     G_lesser_diag = np.diag(G_lesser)
-    return G_R_diag, G_lesser_diag, Gamma_L, Gamma_R
+    return G_R, G_lesser_diag, Gamma_L, Gamma_R
 
 
 def _recursive_inverse(E, H, H00, H01, muL=0, muR=0, block_size=None, compute_lesser=True):

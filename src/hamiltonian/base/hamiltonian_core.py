@@ -4,6 +4,7 @@ from functools import reduce
 from operator import mul
 import logging, inspect
 import numpy as np, scipy
+import scipy.sparse as sp
 from .abstract_interfaces import AbstractBasis
 from ..geometry.structure_designer import StructDesignerXYZ, CyclicTopology
 from .block_tridiagonalization import split_into_subblocks_optimized
@@ -11,6 +12,7 @@ from ..tb.diatomic_matrix_element import me
 from ..tb.orbitals import Orbitals
 from ..io.xyz import dict2xyz
 from ..geometry.si_nanowire_generator import generate_sinw_xyz
+from ..geometry.simple_structure_generator import generate_1d_wire_xyz
 
 unique_distances = set()
 
@@ -117,21 +119,40 @@ class Hamiltonian(BasisTB):
             raise TypeError("sort_func must be callable with signature (coords: ndarray, **kwargs) -> index array")
         kwargs['sort_func'] = sort_func
 
-        # Accept either an xyz string/path, dict-form, or nanowire generator params
+        # Accept either an xyz string/path, dict-form, or structure generator params
         if 'xyz' in kwargs and kwargs['xyz'] is not None:
             if not isinstance(kwargs['xyz'], str):
                 kwargs['xyz'] = dict2xyz(kwargs['xyz'])
         else:
-            # Attempt parametric nanowire generation if nx,ny,nz provided
-            nx, ny, nz = self.nx, self.ny, self.nz
-            if None not in (nx, ny, nz):
+            # Attempt generator based on 'structure' flag
+            structure = str(kwargs.get('structure', 'sinw')).lower()
+            self.structure = structure
+            if structure in ('sinw', 'si-nw', 'silicon-nanowire', 'silicon'):
+                
+                # Parametric silicon nanowire generation requires nx,ny,nz
+                nx, ny, nz = self.nx, self.ny, self.nz
+                if None in (nx, ny, nz):
+                    raise ValueError("For structure='sinw', provide nx, ny, nz.")
                 a = kwargs.get('a', 5.50)
                 periodic_dirs = kwargs.get('periodic_dirs', 'z')
                 passivate_x = kwargs.get('passivate_x', True)
-                kwargs['xyz'] = generate_sinw_xyz(nx=nx, ny=ny, nz=nz, a=a, periodic_dirs=periodic_dirs, passivate_x=passivate_x,
-                                                  title=f'Generated SiNW nx={nx} ny={ny} nz={nz} a={a}')
+                kwargs['xyz'] = generate_sinw_xyz(
+                    nx=nx, ny=ny, nz=nz, a=a, periodic_dirs=periodic_dirs, passivate_x=passivate_x,
+                    title=f'Generated SiNW nx={nx} ny={ny} nz={nz} a={a}'
+                )
+            elif structure in ('1d', '1d-wire', 'wire-1d', 'line'):
+                # Simple 1D wire only needs nx; spacing from 'a'
+                nx = self.nx or kwargs.get('nx', None)
+                a = kwargs.get('a', 1.0)
+                axis = kwargs.get('wire_axis', {0:'x',1:'y',2:'z'}.get(self.transport_axis, 'x'))
+                symbol = kwargs.get('wire_symbol', 'base')
+                kwargs['xyz'] = generate_1d_wire_xyz(nx=nx, a=a, axis=axis, symbol=symbol,
+                                                     title=f'Generated 1D wire nx={nx} a={a} axis={axis}')
+                # For 1D wire, also set a sensible default nearest-neighbour distance
+                if 'nn_distance' not in kwargs or kwargs['nn_distance'] is None:
+                    kwargs['nn_distance'] = a * 1.01
             else:
-                raise ValueError('Provide either xyz (string/path/dict) or nanowire parameters nx, ny, nz.')
+                raise ValueError("Unknown structure type: {}. Supported: 'sinw', '1d-wire'".format(structure))
         
         super(Hamiltonian, self).__init__(**kwargs)
         self._coords = None
@@ -146,38 +167,98 @@ class Hamiltonian(BasisTB):
         self.ct = None
         self.radial_dependence = kwargs.get('radial_dep', None)
         self.so_coupling = kwargs.get('so_coupling', 0.0)
+        # Sparse build options
+        self.sparse_build = kwargs.get('sparse_build', True)
+        self.return_sparse = kwargs.get('return_sparse', False)
+        # Optionally build matrices immediately
+        if kwargs.get('auto_initialize', False):
+            self.initialize()
 
     def initialize(self):
-        # Build matrices using the current structure order. Sorting, if any,
-        # is performed during StructDesignerXYZ.__init__ via `sort_func`.
+        # Build matrices using a sparse assembler for speed, with optional dense output for compatibility.
         self._coords = [0 for _ in range(self.basis_size)]
-        self.h_matrix = np.zeros((self.basis_size, self.basis_size), dtype=complex)
-        self.h_matrix_bc_add = np.zeros((self.basis_size, self.basis_size), dtype=complex)
-        self.h_matrix_bc_factor = np.ones((self.basis_size, self.basis_size), dtype=complex)
-        if self.compute_overlap:
-            self.ov_matrix = np.zeros((self.basis_size, self.basis_size), dtype=complex)
-            self.ov_matrix_bc_add = np.zeros((self.basis_size, self.basis_size), dtype=complex)
-        for j1 in range(self.num_of_nodes):
-            list_of_neighbours = self.get_neighbours(j1)
-            for j2 in list_of_neighbours:
-                if j1 == j2:
-                    for l1 in range(self.orbitals_dict[list(self.atom_list.keys())[j1]].num_of_orbitals):
-                        ind1 = self.qn2ind([('atoms', j1), ('l', l1)], )
-                        self.h_matrix[ind1, ind1] = self._get_me(j1, j2, l1, l1)
-                        if self.compute_overlap: self.ov_matrix[ind1, ind1] = self._get_me(j1, j2, l1, l1, overlap=True)
-                        self._coords[ind1] = list(self.atom_list.values())[j1]
-                        if self.so_coupling != 0:
-                            for l2 in range(self.orbitals_dict[list(self.atom_list.keys())[j1]].num_of_orbitals):
-                                ind2 = self.qn2ind([('atoms', j1), ('l', l2)], )
-                                self.h_matrix[ind1, ind2] = self._get_me(j1, j2, l1, l2)
-                else:
-                    for l1 in range(self.orbitals_dict[list(self.atom_list.keys())[j1]].num_of_orbitals):
-                        for l2 in range(self.orbitals_dict[list(self.atom_list.keys())[j2]].num_of_orbitals):
+
+        use_sparse_build: bool = True if 'sparse_build' not in self.__dict__ else True
+        # Allow override via kwargs passed at construction time
+        # Fallback to kwargs in instance dict if set by __init__ call
+        use_sparse_build = bool(getattr(self, 'sparse_build', True)) if hasattr(self, 'sparse_build') else True
+        return_sparse = bool(getattr(self, 'return_sparse', False)) if hasattr(self, 'return_sparse') else False
+
+        if use_sparse_build:
+            hi, hj, hv = [], [], []
+            if self.compute_overlap:
+                oi, oj, ov = [], [], []
+            # Diagonal and off-diagonal assembly
+            for j1 in range(self.num_of_nodes):
+                list_of_neighbours = self.get_neighbours(j1)
+                for j2 in list_of_neighbours:
+                    if j1 == j2:
+                        norb = self.orbitals_dict[list(self.atom_list.keys())[j1]].num_of_orbitals
+                        for l1 in range(norb):
+                            ind1 = self.qn2ind([('atoms', j1), ('l', l1)])
+                            val = self._get_me(j1, j2, l1, l1)
+                            hi.append(ind1); hj.append(ind1); hv.append(val)
+                            if self.compute_overlap:
+                                valS = self._get_me(j1, j2, l1, l1, overlap=True)
+                                oi.append(ind1); oj.append(ind1); ov.append(valS)
+                            self._coords[ind1] = list(self.atom_list.values())[j1]
+                            if self.so_coupling != 0:
+                                for l2 in range(norb):
+                                    ind2 = self.qn2ind([('atoms', j1), ('l', l2)])
+                                    v = self._get_me(j1, j2, l1, l2)
+                                    if v != 0:
+                                        hi.append(ind1); hj.append(ind2); hv.append(v)
+                    else:
+                        norb1 = self.orbitals_dict[list(self.atom_list.keys())[j1]].num_of_orbitals
+                        norb2 = self.orbitals_dict[list(self.atom_list.keys())[j2]].num_of_orbitals
+                        for l1 in range(norb1):
+                            for l2 in range(norb2):
+                                ind1 = self.qn2ind([('atoms', j1), ('l', l1)])
+                                ind2 = self.qn2ind([('atoms', j2), ('l', l2)])
+                                v = self._get_me(j1, j2, l1, l2)
+                                if v != 0:
+                                    hi.append(ind1); hj.append(ind2); hv.append(v)
+                                if self.compute_overlap:
+                                    vS = self._get_me(j1, j2, l1, l2, overlap=True)
+                                    if vS != 0:
+                                        oi.append(ind1); oj.append(ind2); ov.append(vS)
+            H = sp.coo_matrix((hv, (hi, hj)), shape=(self.basis_size, self.basis_size), dtype=complex).tocsr()
+            self.h_matrix = H if return_sparse else H.toarray()
+            # Boundary condition arrays remain dense for now
+            self.h_matrix_bc_add = np.zeros((self.basis_size, self.basis_size), dtype=complex)
+            self.h_matrix_bc_factor = np.ones((self.basis_size, self.basis_size), dtype=complex)
+            if self.compute_overlap:
+                S = sp.coo_matrix((ov, (oi, oj)), shape=(self.basis_size, self.basis_size), dtype=complex).tocsr()
+                self.ov_matrix = S if return_sparse else S.toarray()
+                self.ov_matrix_bc_add = np.zeros((self.basis_size, self.basis_size), dtype=complex)
+        else:
+            # Fallback old dense builder
+            self.h_matrix = np.zeros((self.basis_size, self.basis_size), dtype=complex)
+            self.h_matrix_bc_add = np.zeros((self.basis_size, self.basis_size), dtype=complex)
+            self.h_matrix_bc_factor = np.ones((self.basis_size, self.basis_size), dtype=complex)
+            if self.compute_overlap:
+                self.ov_matrix = np.zeros((self.basis_size, self.basis_size), dtype=complex)
+                self.ov_matrix_bc_add = np.zeros((self.basis_size, self.basis_size), dtype=complex)
+            for j1 in range(self.num_of_nodes):
+                list_of_neighbours = self.get_neighbours(j1)
+                for j2 in list_of_neighbours:
+                    if j1 == j2:
+                        for l1 in range(self.orbitals_dict[list(self.atom_list.keys())[j1]].num_of_orbitals):
                             ind1 = self.qn2ind([('atoms', j1), ('l', l1)], )
-                            ind2 = self.qn2ind([('atoms', j2), ('l', l2)], )
-                            self.h_matrix[ind1, ind2] = self._get_me(j1, j2, l1, l2)
-                            if self.compute_overlap: self.ov_matrix[ind1, ind2] = self._get_me(j1, j2, l1, l2, overlap=True)
-        
+                            self.h_matrix[ind1, ind1] = self._get_me(j1, j2, l1, l1)
+                            if self.compute_overlap: self.ov_matrix[ind1, ind1] = self._get_me(j1, j2, l1, l1, overlap=True)
+                            self._coords[ind1] = list(self.atom_list.values())[j1]
+                            if self.so_coupling != 0:
+                                for l2 in range(self.orbitals_dict[list(self.atom_list.keys())[j1]].num_of_orbitals):
+                                    ind2 = self.qn2ind([('atoms', j1), ('l', l2)], )
+                                    self.h_matrix[ind1, ind2] = self._get_me(j1, j2, l1, l2)
+                    else:
+                        for l1 in range(self.orbitals_dict[list(self.atom_list.keys())[j1]].num_of_orbitals):
+                            for l2 in range(self.orbitals_dict[list(self.atom_list.keys())[j2]].num_of_orbitals):
+                                ind1 = self.qn2ind([('atoms', j1), ('l', l1)], )
+                                ind2 = self.qn2ind([('atoms', j2), ('l', l2)], )
+                                self.h_matrix[ind1, ind2] = self._get_me(j1, j2, l1, l2)
+                                if self.compute_overlap: self.ov_matrix[ind1, ind2] = self._get_me(j1, j2, l1, l2, overlap=True)
         return self
 
     def set_periodic_bc(self, primitive_cell):
@@ -242,13 +323,12 @@ class Hamiltonian(BasisTB):
         elif self.transport_axis == 2: num_layers = self.nz
         else: raise ValueError("Invalid transport_axis")
 
-        # Guard: periodic-transport mode requires transport_dir to align with a primitive cell vector.
         if self.ct is None or not hasattr(self.ct, 'pcv'):
             mode = "open"
         else:
-            mode = "perioidic"
+            mode = "periodic"
         
-        if mode == "perioidic":
+        if mode == "periodic":
             tdir = np.array(self.transport_dir, dtype=float).flatten()
             if np.linalg.norm(tdir) == 0:
                 raise ValueError("transport_dir must be non-zero.")
@@ -275,7 +355,7 @@ class Hamiltonian(BasisTB):
     def determine_leads(self, tol: float = 1e-3, choose: str = 'center'):
         if self.h_matrix is None:
             raise ValueError("initialize")
-        ham_d = self.h_matrix
+        ham_d = self.h_matrix.toarray() if hasattr(self.h_matrix, 'toarray') else self.h_matrix
         old_size = ham_d.shape[0]
         # Build a 2-cell finite chain along transport to extract a single principal-layer and its coupling
         # Remove transport axis from periodic_dirs so we get an open chain along x
@@ -286,9 +366,19 @@ class Hamiltonian(BasisTB):
         pdirs_nx = ''.join(ch for ch in pdirs if ch != t_axis_char)
         if pdirs_nx == '':
             pdirs_nx = None
-        new_device = Hamiltonian(nx = 2, ny = self.ny, nz=self.nz, periodic_dirs = self.periodic_dirs, passivate_x=False, nn_distance=2.4, transport_dir=[1,0,0], sort_axis='transport')
-        new_device.initialize()
-        hL = new_device.h_matrix
+        new_device = Hamiltonian(
+            structure=self.structure,
+            nx=2,
+            ny=self.ny,
+            nz=self.nz,
+            periodic_dirs=pdirs_nx,
+            passivate_x=False,
+            nn_distance=2.4,
+            transport_dir=[1, 0, 0],
+            sort_axis='transport',
+            auto_initialize=True,
+        )
+        hL = new_device.h_matrix.toarray() if hasattr(new_device.h_matrix, 'toarray') else new_device.h_matrix
         size = hL.shape[0]
         hL0 = hL[:size//2, :size//2]
         hLC = hL[:size//2, size//2:size]

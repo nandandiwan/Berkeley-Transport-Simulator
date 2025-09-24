@@ -19,6 +19,8 @@ class Orbitals(object):
                     atom1=SiliconSP3D5S()
                 elif base.lower()=='h':
                     atom1=HydrogenS()
+                elif base.lower() == 'base':
+                    atom1 = Base()
                 else:
                     raise ValueError('There is no library entry for the atom '+label)
             output[atom1.title]=atom1
@@ -54,3 +56,9 @@ class HydrogenS(Orbitals):
     def __init__(self):
         super(HydrogenS, self).__init__('H')
         self.add_orbital('s', energy=0.9998)
+        
+
+class Base(Orbitals):
+    def __init__(self):
+        super(Base, self).__init__('base')
+        self.add_orbital('s', energy=0)
