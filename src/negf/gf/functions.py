@@ -37,6 +37,8 @@ class GFFunctions:
             self.transverse_periodic = False
         else:
             self.transverse_periodic = True
+            
+        self.kbT_eV = spc.Boltzmann / spc.elementary_charge * 300
         
     
     def _ldos_key(self, E, ky) -> tuple[float, float]:
@@ -98,8 +100,8 @@ class GFFunctions:
         return np.concatenate(parts)
 
     def fermi(self, E, V_vec: np.ndarray, Efn_vec: np.ndarray, cutoff=60) -> np.ndarray:
-        poles, residues = get_ozaki_poles_residues(cutoff, self.ham.kbT_eV, getattr(self.ham, 'T', 300))
-        return fermi_cfr(np.atleast_1d(E), None, poles, residues, self.ham.kbT_eV, V_vec=V_vec, Efn_vec=Efn_vec)[0]
+        poles, residues = get_ozaki_poles_residues(cutoff, self.kbT_eV, getattr(self.ham, 'T', 300))
+        return fermi_cfr(np.atleast_1d(E), None, poles, residues, self.kbT_eV, V_vec=V_vec, Efn_vec=Efn_vec)[0]
 
     def get_n(self, V: np.ndarray, Efn: np.ndarray, *, processes: int = 1,
               ky_avg: bool = True, conduction_only: bool = True,
@@ -144,7 +146,7 @@ class GFFunctions:
                 get_ozaki_poles_residues.cache_clear()
             except Exception:
                 pass
-        poles, residues = get_ozaki_poles_residues(ozaki_cutoff, self.ham.kbT_eV, getattr(self.ham,'T',300))
+        poles, residues = get_ozaki_poles_residues(ozaki_cutoff, self.kbT_eV, getattr(self.ham,'T',300))
 
         E_grid = self.energy_grid
         dE = self.dE
@@ -334,9 +336,7 @@ def _density_k_worker_static(payload: tuple[float, np.ndarray, np.ndarray, np.nd
     for i, E in enumerate(E_grid):
         G_R_diag, _, _, _, _ = gf_inverse(E, ham_device, H00, H01, block_size=block_size, method="recursive")
         ldos_mat[i, :] = -1/np.pi * np.imag(G_R_diag)
-    f_mat = fermi_cfr(E_grid, None, poles, residues, # type: ignore
-                      spc.Boltzmann * getattr(spc, 'zero_Celsius', 273.15) / spc.elementary_charge if False else  # placeholder never used
-                      None, V_vec=V, Efn_vec=Efn)
+    f_mat = fermi_cfr(E_grid, None, poles, residues, spc.Boltzmann / spc.elementary_charge * 300, V_vec=V, Efn_vec=Efn)
     # Note: original fermi_cfr signature used self.ham.kbT_eV; we rely on poles/residues already built for correct kT.
     if conduction_only:
         mask = (E_grid[:, None] >= Ec_arr[None, :])

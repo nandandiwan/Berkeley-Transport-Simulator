@@ -94,6 +94,7 @@ class Hamiltonian(BasisTB):
         # - sort_axis in {'x','y','z','transport','periodic'}
         # If 'periodic' is chosen and a single periodic axis is specified, that axis is used; otherwise falls back to transport.
         periodic_dirs_cfg = kwargs.get('periodic_dirs', None)
+        self.periodic_dirs = periodic_dirs_cfg
         sort_axis_override = kwargs.get('sort_axis', None)
         axes_map = {'x': 0, 'y': 1, 'z': 2}
         default_axis = self.transport_axis
@@ -352,9 +353,13 @@ class Hamiltonian(BasisTB):
             return self.determine_leads()
     def _ind2atom(self, ind):
         return self.orbitals_dict[list(self.atom_list.keys())[ind]]
-    def determine_leads(self, tol: float = 1e-3, choose: str = 'center'):
+    def determine_leads(self, tol: float = 1e-3, choose: str = 'center', redo=False):
         if self.h_matrix is None:
             raise ValueError("initialize")
+        if redo == False and getattr(self, "hRC", None) != None:
+            return self.h_matrix, self.hL0, self.hLC, self.hR0, self.hRC
+        
+        
         ham_d = self.h_matrix.toarray() if hasattr(self.h_matrix, 'toarray') else self.h_matrix
         old_size = ham_d.shape[0]
         # Build a 2-cell finite chain along transport to extract a single principal-layer and its coupling
@@ -371,7 +376,7 @@ class Hamiltonian(BasisTB):
             nx=2,
             ny=self.ny,
             nz=self.nz,
-            periodic_dirs=pdirs_nx,
+            periodic_dirs=self.periodic_dirs,
             passivate_x=False,
             nn_distance=2.4,
             transport_dir=[1, 0, 0],
@@ -397,6 +402,12 @@ class Hamiltonian(BasisTB):
         # Prepare right-lead onsite and coupling blocks
         hR0 = hL0.copy()
         hRC = np.conjugate(hLC.T)  
+        
+        self.h_matrix = ham_new
+        self.hL0 = hL0
+        self.hLC = hLC 
+        self.hR0 = hR0
+        self.hRC = hRC
 
         return ham_new, hL0, hLC, hR0, hRC
         
@@ -439,3 +450,9 @@ class Hamiltonian(BasisTB):
     
     def get_device_dimensions(self):
         return self.nx + 2, self.ny, self.nz
+
+    
+    def device_mapping_atomistic_to_custom_mesh():
+        """"""
+        return 
+        

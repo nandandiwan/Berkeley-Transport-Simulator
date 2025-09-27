@@ -33,7 +33,7 @@ def _sancho_rubio_surface_gf(E, H00, H01, S00=None, iter_max=200, TOL=1e-12):
     Jiezi surface_gf algorithm translated to use numpy arrays.
     Returns surface Green's function G00 for a semi-infinite lead with onsite H00 and coupling H01 (to the right neighbor).
     """
-    E = E + 1e-3j
+    # E = E + 1e-3j
     n = H00.shape[0]
     I = np.eye(n, dtype=complex)
     S00 = I if S00 is None else S00

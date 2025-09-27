@@ -272,3 +272,5 @@ def chandrupatla(f, x0, x1, verbose=False,
     if return_iter:
         return roots, iterations
     return roots
+
+
