@@ -55,7 +55,9 @@ class SiNWGenerator:
                         x=(ix+fx)*a; y=(iy+fy)*a; z=(iz+fz)*a
                         if x < -tol or y < -tol or z < -tol: continue
                         if x > x_max+tol or y > y_max+tol or z > z_max+tol: continue
-                        if 'x' in periodic_dirs and x > x_max - tol: continue
+                        # Always exclude atoms at the max x boundary (open along x for transport)
+                        if  x > x_max - tol: continue
+                        # Exclude y/z max boundary only if those axes are periodic
                         if 'y' in periodic_dirs and y > y_max - tol: continue
                         if 'z' in periodic_dirs and z > z_max - tol: continue
                         pts.add((round(x,6),round(y,6),round(z,6)))
@@ -88,38 +90,64 @@ class SiNWGenerator:
                 
                 # First, probe for an existing silicon neighbor.
                 av = pos_v + d_norm * bond
-                x,y,z= av
+                x,y,z = av
+                
                 if (periodic_dirs == 'z'):
-                    if (x >= -tol and x <= x_max + tol and  y >= -tol and y <= y_max + tol ):
+                    # Periodic only in z: if the Si-Si probe lies within the x and y bounds, we consider a neighbor present.
+                    has_xy_neighbor = (x >= -tol and x <= x_max + tol and y >= -tol and y <= y_max + tol)
+                    if has_xy_neighbor:
                         continue
-                    if (z < 0):
+                    # Wrap along z when placing hydrogen position
+                    if z < 0:
                         add[2] += z_max
                 elif (periodic_dirs == 'y'):
-                    if (x >= -tol and x <= x_max + tol and  z >= -tol and z <= z_max + tol ):
-                        continue                        
-                    if (not passivate_x):
-                            if (x<= -tol or x > x_max - tol) and  z >= -tol and z <= z_max + tol:
-                                continue
-                    if (y < 0):
-                        add[1] += y_max     
-                elif (periodic_dirs == 'x'):
+                    # Periodic only in y: determine missing neighbors using Si–Si probe point av
+                    missing_z = (z < -tol) or (z > z_max + tol)
+                    missing_x = (x < -tol) or (x > x_max -a/4+ tol)
+                    if not passivate_x:
+                        # Only z-surface passivation
+                        if not missing_z:
+                            continue
+                    else:
+                        # Passivate both x and z surfaces
+                        if not (missing_z or missing_x):
+                            continue
+                    # Wrap only along y back into the cell
+                    hy = (pos_v + d_norm * SI_H_BOND_LENGTH)[1]
+                    if (hy < 0):
+                        add[1] += y_max
+                    elif (hy > y_max):
+                        add[1] -= y_max
+                         
+                elif (periodic_dirs == 'x' or periodic_dirs == ''):
                     if (y >= -tol and y <= y_max + tol and  z >= -tol and z <= z_max + tol ):
                         continue
                     if (x < 0):
                         add[0] += x_max    
+                        
+                    if  y >= -tol and y <= y_max + tol and  z >= -tol and z <= z_max + tol and (x < -tol or x > x_max - tol):
+                        if not passivate_x: # skip
+                            continue
+                    
                 elif (periodic_dirs == 'xy'):
-                    if (z >= -tol and z <= z_max + tol ):
-                        continue
-                    if (y < 0):
-                        add[1] += y_max
-                    if (x < 0):
-                        add[0] += x_max   
-                        
-                
-                if  y >= -tol and y <= y_max + tol and  z >= -tol and z <= z_max + tol and (x < -tol or x > x_max - tol):
+                    # Periodic in x and y; determine surfaces using Si–Si probe av
+                    missing_z = (z < -tol) or (z > z_max + tol)
+                    missing_x = (x < -tol) or (x > x_max + tol)
                     if not passivate_x:
-                        continue
-                        
+                        if not missing_z:
+                            continue
+                    else:
+                        if not (missing_z or missing_x):
+                            continue
+
+                    # Wrap periodic coordinates back into the XY cell for placing hydrogens
+                    hy = (pos_v + d_norm * SI_H_BOND_LENGTH)[1]
+                    if (hy < 0):
+                        add[1] += y_max
+                    elif (hy > y_max):
+                        add[1] -= y_max
+                    # Keep x outside if on left/right surfaces so we get both faces explicitly (no x-wrapping)
+                    
                 
                 h_pos = pos_v + d_norm * SI_H_BOND_LENGTH + add
                 candidates.append(tuple(round(v, 6) for v in h_pos))
@@ -133,7 +161,7 @@ class SiNWGenerator:
         return sorted(uniq)
 
     @staticmethod
-    def generate(nx=2, ny=2, nz=1, a=A_DEFAULT, periodic_dirs: str|None='z', passivate_x: bool=True) -> GeneratedNW:
+    def generate(nx=2, ny=1, nz=1, a=A_DEFAULT, periodic_dirs: str|None='xy', passivate_x: bool=False) -> GeneratedNW:
         periodic_dirs = periodic_dirs or ''
         si_positions = SiNWGenerator._build_si(nx,ny,nz,a,periodic_dirs)
         h_positions = SiNWGenerator._hydrogens(si_positions,a,periodic_dirs,passivate_x, nx, ny, nz)
@@ -166,7 +194,7 @@ def generate_sinw_xyz(nx:int, ny:int, nz:int, a:float=5.50, periodic_dirs:str='z
 __all__ = ['SiNWGenerator','GeneratedNW','generate_sinw_xyz']
 
 def test_parametric():
-    nw=SiNWGenerator.generate()
+    nw=SiNWGenerator.generate(1, 1, 1, periodic_dirs="y", passivate_x=True)
     SiNWGenerator.write_xyz(nw,'SiNW2_copy.xyz')
     print('Generated (2,2,1):', len(nw.si_positions),'Si', len(nw.h_positions),'H')
 

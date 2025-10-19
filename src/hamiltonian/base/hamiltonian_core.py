@@ -357,7 +357,7 @@ class Hamiltonian(BasisTB):
         if self.h_matrix is None:
             raise ValueError("initialize")
         if redo == False and getattr(self, "hRC", None) != None:
-            return self.h_matrix, self.hL0, self.hLC, self.hR0, self.hRC
+            return self.h_matrix, self.hL0, self.hLC, self.hR0, self.hRC, self.h_periodic
         
         
         ham_d = self.h_matrix.toarray() if hasattr(self.h_matrix, 'toarray') else self.h_matrix
@@ -387,29 +387,22 @@ class Hamiltonian(BasisTB):
         size = hL.shape[0]
         hL0 = hL[:size//2, :size//2]
         hLC = hL[:size//2, size//2:size]
-        ham_new = np.zeros((old_size + size, old_size + size), dtype=complex)
-        ham_new[:size//2, :size//2] = hL0
-        ham_new[:size//2, size//2:size] = hLC
-        ham_new[size//2:size, :size//2] = np.conjugate(hLC.T)
-        
-        ham_new[size//2:-size//2, size//2:-size//2] = ham_d
-        
-        
-        ham_new[-size//2:, -size//2:] = hL0
-        ham_new[-size//2:, -size:-size//2] = np.conjugate(hLC.T)
-        ham_new[-size:-size//2, -size//2:] = hLC
-
-        # Prepare right-lead onsite and coupling blocks
         hR0 = hL0.copy()
         hRC = np.conjugate(hLC.T)  
         
-        self.h_matrix = ham_new
         self.hL0 = hL0
         self.hLC = hLC 
         self.hR0 = hR0
         self.hRC = hRC
 
-        return ham_new, hL0, hLC, hR0, hRC
+        if (self.periodic_dirs == "xy" or self.periodic_dirs == "y"):
+            h_periodic  = self.get_periodic_coupling()
+            
+            self.h_periodic = h_periodic
+        else:
+            self.h_periodic = sp.csc_matrix(self.hL0.shape)
+
+        return self.h_matrix, hL0, hLC, hR0, hRC, self.h_periodic
         
     # --- Other methods (diagonalize, _get_me, etc.) are unchanged ---
     def _get_me(self, atom1, atom2, l1, l2, coords=None, overlap=False):
@@ -451,6 +444,10 @@ class Hamiltonian(BasisTB):
     def get_device_dimensions(self):
         return self.nx + 2, self.ny, self.nz
 
+    def get_periodic_coupling(self):
+        # do something 
+        return 
+        
     
     def device_mapping_atomistic_to_custom_mesh():
         """"""

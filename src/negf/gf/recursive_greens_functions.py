@@ -1,6 +1,7 @@
 import copy
 import numpy as np
 import scipy.sparse as sp
+#from negf.self_energy.surface import surface_greens_function
 from negf.self_energy.surface import surface_greens_function
 from negf.utils.common import fermi_dirac, smart_inverse
 import scipy.linalg as linalg
@@ -71,20 +72,20 @@ def _direct_inverse(E, H, H00, H01, muL=0, muR=0):
     n = H.shape[0]
 
     # Surface Green's functions (Sancho-Rubio already adds small imaginary part)
-    G00_L = surface_greens_function(E - muL, H00, H01)
-    G00_R = surface_greens_function(E - muR, H00, H01)
-    if G00_L is None or G00_R is None:
-        raise ValueError("surface_greens_function returned None (non-converged).")
-    G00_L = np.asarray(G00_L)
-    G00_R = np.asarray(G00_R)
-    if G00_L.ndim != 2:
-        G00_L = np.atleast_2d(G00_L)
-    if G00_R.ndim != 2:
-        G00_R = np.atleast_2d(G00_R)
+    Sigma_L, Sigma_R = surface_greens_function(E - muL,  H01.conj().T, H00, H01)
+    # G00_R = surface_greens_function(E - muR, H00, H01)
+    # if G00_L is None or G00_R is None:
+    #     raise ValueError("surface_greens_function returned None (non-converged).")
+    # G00_L = np.asarray(G00_L)
+    # G00_R = np.asarray(G00_R)
+    # if G00_L.ndim != 2:
+    #     G00_L = np.atleast_2d(G00_L)
+    # if G00_R.ndim != 2:
+    #     G00_R = np.atleast_2d(G00_R)
 
-    # Self-energies blocks Σ = T^† G00 T with T = H01 (device↔lead principal layer coupling)
-    Sigma_L = H01.conj().T @ G00_L @ H01
-    Sigma_R = H01.conj().T @ G00_R @ H01
+    # # Self-energies blocks Σ = T^† G00 T with T = H01 (device↔lead principal layer coupling)
+    # Sigma_L = H01.conj().T @ G00_L @ H01
+    # Sigma_R = H01.conj().T @ G00_R @ H01
     m = Sigma_L.shape[0]
 
     # Embed into device corners
