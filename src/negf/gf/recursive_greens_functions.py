@@ -1,10 +1,13 @@
 import copy
+from typing import List
+
 import numpy as np
 import scipy.sparse as sp
 #from negf.self_energy.surface import surface_greens_function
 from negf.self_energy.surface import surface_greens_function
 from negf.utils.common import fermi_dirac, smart_inverse
 import scipy.linalg as linalg
+from negf.gf.general_rgf.pairwise_partial_inverse import pairwise_partial_inverse
 
 def mat_left_div(mat_a, mat_b):
     ans, resid, rank, s = linalg.lstsq(mat_a, mat_b, lapack_driver='gelsy')
@@ -47,11 +50,13 @@ def recursive_gf(energy, mat_l_list, mat_d_list, mat_u_list, left_se=None, right
 def add_eta(E):
     return E + 1e-9j
 
-def gf_inverse(E, H, H00, H01, mu1 = 0, mu2 = 0, block_size = None, method : str= "recursive"):
+def gf_inverse(E, H, H00, H01, mu1 = 0, mu2 = 0, block_size = None, block_size_list = None, method : str= "recursive", processes = 1):
     if (method == "direct"):
         return _direct_inverse(E, H, H00, H01, mu1, mu2)  
     if (method == "recursive"):
         return _recursive_inverse(E, H, H00, H01, mu1, mu2, block_size)
+    if (method == "var_recursive"):
+        return _variable_recursive_inverse(E, H, H00, H01, block_size_list, mu1, mu2, processes)
     raise ValueError(f"Unknown method '{method}'. Use 'direct' or 'recursive'.")
     
 def _direct_inverse(E, H, H00, H01, muL=0, muR=0):
@@ -212,3 +217,104 @@ def _recursive_inverse(E, H, H00, H01, muL=0, muR=0, block_size=None, compute_le
     G_lesser_diag = np.concatenate([np.diag(block) for block in G_lesser])
 
     return G_R_diag, G_lesser_diag, G_lesser_offdiag_right, Gamma_L, Gamma_R 
+
+def _variable_recursive_inverse(E, H, H00, H01, block_size_list, mu1, mu2, processes):
+    if block_size_list is None:
+        raise ValueError("block_size_list must be provided for method='var_recursive'.")
+
+    block_sizes = np.asarray(block_size_list, dtype=int).astype(int)
+    if block_sizes.ndim != 1:
+        raise ValueError("block_size_list must be a 1D array of block sizes.")
+    if np.any(block_sizes <= 0):
+        raise ValueError("block_size_list entries must be positive integers.")
+
+    if sp.issparse(H):
+        H = H.toarray()
+    if sp.issparse(H00):
+        H00 = H00.toarray()
+    if sp.issparse(H01):
+        H01 = H01.toarray()
+
+    n = H.shape[0]
+    offsets = np.cumsum(np.concatenate(([0], block_sizes)))
+    if offsets[-1] != n:
+        raise ValueError("Sum of block_size_list must match Hamiltonian dimension.")
+
+    E_eta = add_eta(E)
+
+    Sigma_L, Sigma_R = surface_greens_function(E - mu1, H01.conj().T, H00, H01)
+    # Ensure self-energies match the first/last block dimensions
+    left_dim = int(block_sizes[0])
+    right_dim = int(block_sizes[-1])
+    Sigma_L = np.asarray(Sigma_L, dtype=complex)[:left_dim, :left_dim]
+    Sigma_R = np.asarray(Sigma_R, dtype=complex)[-right_dim:, -right_dim:]
+    Gamma_L = 1j * (Sigma_L - Sigma_L.conj().T)
+    Gamma_R = 1j * (Sigma_R - Sigma_R.conj().T)
+
+    f_L = fermi_dirac(E, mu1)
+    f_R = fermi_dirac(E, mu2)
+    Sigma_L_lesser = Gamma_L * f_L * 1j
+    Sigma_R_lesser = Gamma_R * f_R * 1j
+
+    # Build block tridiagonal representation of A = (E I - H - Sigma)
+    diagonal_blocks: List[np.ndarray] = []
+    upper_blocks: List[np.ndarray] = []
+    lower_blocks: List[np.ndarray] = []
+
+    for idx, size in enumerate(block_sizes):
+        s = offsets[idx]
+        e = offsets[idx + 1]
+        H_block = H[s:e, s:e]
+        diag_block = E_eta * np.eye(size, dtype=complex) - H_block
+        if idx == 0:
+            diag_block -= Sigma_L
+        if idx == len(block_sizes) - 1:
+            diag_block -= Sigma_R
+        diagonal_blocks.append(diag_block)
+        if idx < len(block_sizes) - 1:
+            s_next = offsets[idx + 1]
+            e_next = offsets[idx + 2]
+            upper_blocks.append(-H[s:e, s_next:e_next])
+            lower_blocks.append(-H[s_next:e_next, s:e])
+
+    result = pairwise_partial_inverse(
+        diagonal_blocks,
+        upper_blocks,
+        lower_blocks,
+        processes=processes,
+        return_full=True,
+    )
+
+    if result.full_inverse is None:
+        raise RuntimeError("Pairwise inversion did not return the full inverse matrix.")
+
+    full_inverse = result.full_inverse
+    G_R_diag = np.concatenate([np.diag(block) for block in result.diagonal])
+
+    first_slice = slice(offsets[0], offsets[1])
+    last_slice = slice(offsets[-2], offsets[-1]) if len(block_sizes) > 1 else first_slice
+
+    G_lesser_blocks: List[np.ndarray] = []
+    G_lesser_offdiag_right: List[np.ndarray] = []
+
+    for idx, size in enumerate(block_sizes):
+        s = offsets[idx]
+        e = offsets[idx + 1]
+        Gi_first = full_inverse[s:e, first_slice]
+        Gi_last = full_inverse[s:e, last_slice]
+        block = np.zeros((size, size), dtype=complex)
+        block += Gi_first @ Sigma_L_lesser @ Gi_first.conj().T
+        block += Gi_last @ Sigma_R_lesser @ Gi_last.conj().T
+        G_lesser_blocks.append(block)
+        if idx < len(block_sizes) - 1:
+            s_next = offsets[idx + 1]
+            e_next = offsets[idx + 2]
+            Gi_next_first = full_inverse[s_next:e_next, first_slice]
+            Gi_next_last = full_inverse[s_next:e_next, last_slice]
+            off_block = Gi_first @ Sigma_L_lesser @ Gi_next_first.conj().T
+            off_block += Gi_last @ Sigma_R_lesser @ Gi_next_last.conj().T
+            G_lesser_offdiag_right.append(off_block)
+
+    G_lesser_diag = np.concatenate([np.diag(block) for block in G_lesser_blocks])
+
+    return G_R_diag, G_lesser_diag, G_lesser_offdiag_right, Gamma_L, Gamma_R
