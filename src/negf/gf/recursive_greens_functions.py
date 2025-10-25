@@ -5,6 +5,7 @@ import numpy as np
 import scipy.sparse as sp
 #from negf.self_energy.surface import surface_greens_function
 from negf.self_energy.surface import surface_greens_function
+from negf.self_energy.greens_functions import surface_greens_function_nn
 from negf.utils.common import fermi_dirac, smart_inverse
 import scipy.linalg as linalg
 from negf.gf.general_rgf.pairwise_partial_inverse import pairwise_partial_inverse
@@ -51,15 +52,19 @@ def add_eta(E):
     return E + 1e-9j
 
 def gf_inverse(E, H, H00, H01, mu1 = 0, mu2 = 0, block_size = None, block_size_list = None, method : str= "recursive", processes = 1):
+    
+    Sigma_L, Sigma_R = surface_greens_function_nn(E, H01, H00, H01.conj().T)
+
+    
     if (method == "direct"):
-        return _direct_inverse(E, H, H00, H01, mu1, mu2)  
+        return _direct_inverse(E, H, Sigma_L, Sigma_R, mu1, mu2)  
     if (method == "recursive"):
         return _recursive_inverse(E, H, H00, H01, mu1, mu2, block_size)
     if (method == "var_recursive"):
-        return _variable_recursive_inverse(E, H, H00, H01, block_size_list, mu1, mu2, processes)
+        return _variable_recursive_inverse(E, H,  Sigma_L, Sigma_R, block_size_list, mu1, mu2, processes)
     raise ValueError(f"Unknown method '{method}'. Use 'direct' or 'recursive'.")
     
-def _direct_inverse(E, H, H00, H01, muL=0, muR=0):
+def _direct_inverse(E, H, Sigma_L, Sigma_R, H01, muL=0, muR=0):
     """Direct inversion identical in spirit to the working notebook snippet.
 
     Returns:
@@ -77,7 +82,7 @@ def _direct_inverse(E, H, H00, H01, muL=0, muR=0):
     n = H.shape[0]
 
     # Surface Green's functions (Sancho-Rubio already adds small imaginary part)
-    Sigma_L, Sigma_R = surface_greens_function(E - muL,  H01.conj().T, H00, H01)
+    
     # G00_R = surface_greens_function(E - muR, H00, H01)
     # if G00_L is None or G00_R is None:
     #     raise ValueError("surface_greens_function returned None (non-converged).")
@@ -119,18 +124,22 @@ def _direct_inverse(E, H, H00, H01, muL=0, muR=0):
     return G_R, G_lesser_diag, Gamma_L, Gamma_R
 
 
-def _recursive_inverse(E, H, H00, H01, muL=0, muR=0, block_size=None, compute_lesser=True):
+def _recursive_inverse(E, H,  H00, H01, muL=0, muR=0, block_size=None, compute_lesser=True):
     if sp.issparse(H):
         H = H.toarray()
     n = H.shape[0]
     if block_size is None:
-        block_size = H00.shape[0]
+        block_size = Sigma_L.shape[0]
     if n % block_size != 0:
         raise ValueError("H dimension not divisible by block_size.")
     n_blocks = n // block_size
     E = add_eta(E)
     dagger = lambda A: np.conjugate(A.T)
-
+    G00_L = surface_greens_function(E, H00, H01)
+    G00_R = surface_greens_function(E, H00, H01)
+    
+    Sigma_L = H01.conj().T @ G00_L @ H01
+    Sigma_R = H01.conj().T @ G00_R @ H01
     # Slice blocks
     H_ii = []
     H_ij = []
@@ -143,10 +152,7 @@ def _recursive_inverse(E, H, H00, H01, muL=0, muR=0, block_size=None, compute_le
 
     dagger = lambda A: A.conj().T
     # Lead self energies
-    G00_L = surface_greens_function(E - muL, H00, H01)
-    G00_R = surface_greens_function(E - muR, H00, H01)
-    Sigma_L = H01.conj().T @ G00_L @ H01
-    Sigma_R = H01.conj().T @ G00_R @ H01
+
     Gamma_L = 1j * (Sigma_L - Sigma_L.conj().T)
     Gamma_R = 1j * (Sigma_R - Sigma_R.conj().T)
 
@@ -218,7 +224,7 @@ def _recursive_inverse(E, H, H00, H01, muL=0, muR=0, block_size=None, compute_le
 
     return G_R_diag, G_lesser_diag, G_lesser_offdiag_right, Gamma_L, Gamma_R 
 
-def _variable_recursive_inverse(E, H, H00, H01, block_size_list, mu1, mu2, processes):
+def _variable_recursive_inverse(E, H, Sigma_L, Sigma_R, block_size_list, mu1, mu2, processes):
     if block_size_list is None:
         raise ValueError("block_size_list must be provided for method='var_recursive'.")
 
@@ -230,10 +236,7 @@ def _variable_recursive_inverse(E, H, H00, H01, block_size_list, mu1, mu2, proce
 
     if sp.issparse(H):
         H = H.toarray()
-    if sp.issparse(H00):
-        H00 = H00.toarray()
-    if sp.issparse(H01):
-        H01 = H01.toarray()
+
 
     n = H.shape[0]
     offsets = np.cumsum(np.concatenate(([0], block_sizes)))
@@ -242,7 +245,6 @@ def _variable_recursive_inverse(E, H, H00, H01, block_size_list, mu1, mu2, proce
 
     E_eta = add_eta(E)
 
-    Sigma_L, Sigma_R = surface_greens_function(E - mu1, H01.conj().T, H00, H01)
     # Ensure self-energies match the first/last block dimensions
     left_dim = int(block_sizes[0])
     right_dim = int(block_sizes[-1])

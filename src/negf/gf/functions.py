@@ -16,7 +16,10 @@ from .recursive_greens_functions import recursive_gf
 from hamiltonian.base.block_tridiagonalization import split_into_subblocks_optimized
 from hamiltonian.base.hamiltonian_core import Hamiltonian
 from negf.gf.recursive_greens_functions import gf_inverse
-from negf.utils.block_partition import compute_optimal_block_sizes
+from negf.utils.block_partition import (
+    compute_block_sizes_block_tridiagonal,
+    compute_block_sizes_metis,
+)
 from negf.utils.common import chandrupatla
 
 class GFFunctions:
@@ -35,18 +38,16 @@ class GFFunctions:
         ham_new, hL0, hLC, hR0, hRC, h_periodic = self.ham.get_hamiltonians()
         self.ham_device = ham_new
         self.H00 = hL0
+        self.H00_right = hR0 if hR0 is not None else hL0
         self.H01 = hLC
         self.h_k_lead = h_periodic
         self.h_k_device = sp.block_diag([h_periodic] * (int)(ham_new.shape[0] / self.H00.shape[0]), format='csc')
         self.block_size = self.H00.shape[0]
-        if use_variable_blocks is None:
-            use_variable_blocks = bool(getattr(self.ham, "enable_variable_blocks", False))
-        self.use_variable_blocks: bool = bool(use_variable_blocks)
+        
+        self.use_variable_blocks = use_variable_blocks
         self.block_size_list: np.ndarray | None = None
-        self.use_variable_blocks: bool = getattr(self.ham, "enable_variable_blocks", False)
-        self.block_size_list: np.ndarray | None = None
-        if self.use_variable_blocks:
-            self.block_size_list = compute_optimal_block_sizes(self.ham_device, self.H01)
+        
+            
         if (self.ham.periodic_dirs == None or self.ham.periodic_dirs == "x"):
             self.transverse_periodic = False
         else:
@@ -76,11 +77,26 @@ class GFFunctions:
             self._orb2atom[s:e] = a
 
         if self.use_variable_blocks:
-            self.block_size_list = compute_optimal_block_sizes(
-                self.ham_device,
-                self.H01,
-                atom_offsets=self.atom_offsets,
-            )
+            try:
+                self.block_size_list = compute_block_sizes_metis(
+                    self.ham_device,
+                    self.H00,
+                    self.H00_right,
+                    atom_offsets=self.atom_offsets,
+                    min_block_orbitals=self.H00.shape[0] // 5,
+                )
+                print(self.block_size_list)
+            except Exception as exc:
+                print(f"[GFFunctions] METIS partition fell back to heuristic: {exc}")
+        if self.block_size_list is None:
+            self.block_size_list = compute_block_sizes_block_tridiagonal(self.ham_device)
+
+        # if self.use_variable_blocks:
+        #     self.block_size_list = compute_block_sizes_block_tridiagonal(
+        #         self.ham_device,
+        #         self.H01,
+        #         atom_offsets=self.atom_offsets,
+        #     )
 
     def _aggregate_orbital_to_atom(self, vec_orb: np.ndarray) -> np.ndarray:
         """Sum orbital-resolved vector into atom-resolved vector.

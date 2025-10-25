@@ -43,7 +43,7 @@ class GeneratedNW:
 
 class SiNWGenerator:
     @staticmethod
-    def _build_si(nx,ny,nz,a,periodic_dirs:str):
+    def _build_si(nx,ny,nz,a,periodic_dirs:str,symmetric_x):
         tol=1e-9
         x_max,y_max,z_max = nx*a, ny*a, nz*a
         pts=set()
@@ -56,8 +56,10 @@ class SiNWGenerator:
                         if x < -tol or y < -tol or z < -tol: continue
                         if x > x_max+tol or y > y_max+tol or z > z_max+tol: continue
                         # Always exclude atoms at the max x boundary (open along x for transport)
-                        if  x > x_max - tol: continue
+                        if not symmetric_x:
+                            if  x > x_max - tol: continue
                         # Exclude y/z max boundary only if those axes are periodic
+
                         if 'y' in periodic_dirs and y > y_max - tol: continue
                         if 'z' in periodic_dirs and z > z_max - tol: continue
                         pts.add((round(x,6),round(y,6),round(z,6)))
@@ -69,7 +71,7 @@ class SiNWGenerator:
         return 'A' if (int(round(2*(fx+fy+fz))) & 1)==0 else 'B'
 
     @staticmethod
-    def _hydrogens(si_positions, a, periodic_dirs, passivate_x, nx, ny, nz):
+    def _hydrogens(si_positions, a, periodic_dirs, passivate_x, nx, ny, nz, symmetric_x = False):
         si_np = np.array(si_positions)
         if len(si_np) == 0:
             return []
@@ -78,7 +80,7 @@ class SiNWGenerator:
         probe_tol = 0.25
         candidates = []
         tol = 1e-9
-        x_max, y_max, z_max = nx * a, ny * a, nz * a
+        x_max, y_max, z_max = (nx) * a, ny * a, nz * a
 
         for pos in si_positions:
             pos_v = np.array(pos)
@@ -161,10 +163,10 @@ class SiNWGenerator:
         return sorted(uniq)
 
     @staticmethod
-    def generate(nx=2, ny=1, nz=1, a=A_DEFAULT, periodic_dirs: str|None='xy', passivate_x: bool=False) -> GeneratedNW:
+    def generate(nx=2, ny=1, nz=1, a=A_DEFAULT, periodic_dirs: str|None='xy', passivate_x: bool=False, symmetric_x = False) -> GeneratedNW:
         periodic_dirs = periodic_dirs or ''
-        si_positions = SiNWGenerator._build_si(nx,ny,nz,a,periodic_dirs)
-        h_positions = SiNWGenerator._hydrogens(si_positions,a,periodic_dirs,passivate_x, nx, ny, nz)
+        si_positions = SiNWGenerator._build_si(nx,ny,nz,a,periodic_dirs, symmetric_x = symmetric_x)
+        h_positions = SiNWGenerator._hydrogens(si_positions,a,periodic_dirs,passivate_x, nx, ny, nz ,symmetric_x = symmetric_x)
         return GeneratedNW(a,nx,ny,nz, si_positions, h_positions)
 
     @staticmethod
@@ -180,11 +182,11 @@ class SiNWGenerator:
 
 # Compatibility wrapper expected by older code (hamiltonian_core)
 
-def generate_sinw_xyz(nx:int, ny:int, nz:int, a:float=5.50, periodic_dirs:str='z', passivate_x:bool=True, title:str|None=None):
+def generate_sinw_xyz(nx:int, ny:int, nz:int, a:float=5.50, periodic_dirs:str='z', passivate_x:bool=True, symmetric_x  :bool = False, title:str|None=None):
     """Return XYZ string for a parametric silicon nanowire.
     Mirrors previous interface consumed by Hamiltonian. Keeps ordering: all Si then H.
     """
-    nw = SiNWGenerator.generate(nx=nx, ny=ny, nz=nz, a=a, periodic_dirs=periodic_dirs, passivate_x=passivate_x)
+    nw = SiNWGenerator.generate(nx=nx, ny=ny, nz=nz, a=a, periodic_dirs=periodic_dirs, passivate_x=passivate_x, symmetric_x= symmetric_x)
     atoms = [('Si',)+p for p in nw.si_positions] + [('H',)+p for p in nw.h_positions]
     lines=[str(len(atoms)), title or f'SiNW nx={nx} ny={ny} nz={nz} a={a}']
     for lab,x,y,z in atoms:
@@ -194,7 +196,7 @@ def generate_sinw_xyz(nx:int, ny:int, nz:int, a:float=5.50, periodic_dirs:str='z
 __all__ = ['SiNWGenerator','GeneratedNW','generate_sinw_xyz']
 
 def test_parametric():
-    nw=SiNWGenerator.generate(1, 1, 1, periodic_dirs="y", passivate_x=True)
+    nw=SiNWGenerator.generate(1, 1, 1, periodic_dirs="x", passivate_x=True, symmetric_x=True)
     SiNWGenerator.write_xyz(nw,'SiNW2_copy.xyz')
     print('Generated (2,2,1):', len(nw.si_positions),'Si', len(nw.h_positions),'H')
 

@@ -119,6 +119,8 @@ class Hamiltonian(BasisTB):
         elif not callable(sort_func):
             raise TypeError("sort_func must be callable with signature (coords: ndarray, **kwargs) -> index array")
         kwargs['sort_func'] = sort_func
+        
+        self.symmetric_x = kwargs.get('symmetric_x', False)
 
         # Accept either an xyz string/path, dict-form, or structure generator params
         if 'xyz' in kwargs and kwargs['xyz'] is not None:
@@ -138,7 +140,7 @@ class Hamiltonian(BasisTB):
                 periodic_dirs = kwargs.get('periodic_dirs', 'z')
                 passivate_x = kwargs.get('passivate_x', True)
                 kwargs['xyz'] = generate_sinw_xyz(
-                    nx=nx, ny=ny, nz=nz, a=a, periodic_dirs=periodic_dirs, passivate_x=passivate_x,
+                    nx=nx, ny=ny, nz=nz, a=a, periodic_dirs=periodic_dirs, passivate_x=passivate_x, symmetric_x = self.symmetric_x,
                     title=f'Generated SiNW nx={nx} ny={ny} nz={nz} a={a}'
                 )
             elif structure in ('1d', '1d-wire', 'wire-1d', 'line'):
@@ -174,6 +176,25 @@ class Hamiltonian(BasisTB):
         # Optionally build matrices immediately
         if kwargs.get('auto_initialize', False):
             self.initialize()
+
+    def get_neighbours(self, query):
+        if getattr(self, 'structure', None) in {'1d', '1d-wire', 'wire-1d', 'line'}:
+            if isinstance(query, int):
+                idx = query
+            elif isinstance(query, str):
+                keys = list(self.atom_list.keys())
+                idx = keys.index(query) if query in self.atom_list else -1
+            else:
+                return super(Hamiltonian, self).get_neighbours(query)
+            if idx < 0 or idx >= self.num_of_nodes:
+                return []
+            neighbours = []
+            if idx - 1 >= 0:
+                neighbours.append(idx - 1)
+            if idx + 1 < self.num_of_nodes:
+                neighbours.append(idx + 1)
+            return neighbours
+        return super(Hamiltonian, self).get_neighbours(query)
 
     def initialize(self):
         # Build matrices using a sparse assembler for speed, with optional dense output for compatibility.
@@ -356,7 +377,7 @@ class Hamiltonian(BasisTB):
     def determine_leads(self, tol: float = 1e-3, choose: str = 'center', redo=False):
         if self.h_matrix is None:
             raise ValueError("initialize")
-        if redo == False and getattr(self, "hRC", None) != None:
+        if redo == False and hasattr(sp.sparray, "hRC"):
             return self.h_matrix, self.hL0, self.hLC, self.hR0, self.hRC, self.h_periodic
         
         
