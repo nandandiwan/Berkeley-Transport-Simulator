@@ -8,16 +8,19 @@ Lead self-energy calculation using surface Green's functions.
 Methods: Sancho-Rubio (default), iterative (disabled), transfer, and a mixed recursive fallback.
 """
 
-eta = 1e-9j
+eta = 1e-9
 
 def _add_eta(E):
     if np.imag(E) == 0:
-        return E + 1j * eta
+
+        return E + eta * 1j 
+    
     return E
 
 def surface_greens_function(E, H00, H01, method="sancho_rubio",
                             iteration_max=1000, tolerance=1e-6):
     E = _add_eta(E)
+ 
     if method == "sancho_rubio":
         return _sancho_rubio_surface_gf(E, H00, H01, None, 100, 1e-10)
     elif method == "iterative":
