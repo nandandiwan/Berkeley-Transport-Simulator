@@ -83,6 +83,7 @@ class PoissonNEGFSCFSolver:
 
         self._frozen_charge = np.zeros(ndofs, dtype=float)
         self.poisson.set_charge_callback(self._charge_callback)
+        self._contact_fermi: Optional[tuple[float, float]] = None
 
     def _charge_callback(self, _u: np.ndarray, _coords: np.ndarray) -> np.ndarray:
         return self._frozen_charge
@@ -94,6 +95,9 @@ class PoissonNEGFSCFSolver:
     ) -> np.ndarray:
         fermi_arr = _ensure_vector(fermi_level, self.poisson.solution.x.array.size)
         mu_scalar = float(np.mean(fermi_arr))
+        if self._contact_fermi is not None:
+            mu_left, mu_right = self._contact_fermi
+            return self.negf.density_from_contacts(potential, mu_left, mu_right)
         if self.density_scheme == "lesser":
             return self.negf.density_from_lesser(potential, mu_scalar)
         return self.negf.density_from_integral(
@@ -111,6 +115,7 @@ class PoissonNEGFSCFSolver:
         max_iterations: Optional[int] = None,
         tolerance: Optional[float] = None,
         potential_mixing: Optional[float] = None,
+        contact_fermi: Optional[tuple[float, float]] = None,
     ) -> SCFResult:
         ndofs = self.poisson.solution.x.array.size
 
@@ -132,6 +137,7 @@ class PoissonNEGFSCFSolver:
         max_iter = max_iterations if max_iterations is not None else self.max_iterations
         tol = tolerance if tolerance is not None else self.tolerance
         mixing = potential_mixing if potential_mixing is not None else self.potential_mixing
+        self._contact_fermi = contact_fermi
 
         history: List[SCFIterationRecord] = []
         converged = False
@@ -165,7 +171,20 @@ class PoissonNEGFSCFSolver:
                 )
 
             electron_density = self._compute_density(potential, fermi)
-            charge_density = -self.negf.q * electron_density + self.negf.q * self.net_doping
+            if self._contact_fermi is not None:
+                mu_left, mu_right = self._contact_fermi
+                charge_density = self.negf.charge_density(
+                    potential,
+                    mu_left,
+                    mu_right=mu_right,
+                    net_doping=self.net_doping,
+                )
+            else:
+                charge_density = self.negf.charge_density(
+                    potential,
+                    float(np.mean(fermi)),
+                    net_doping=self.net_doping,
+                )
 
             self._frozen_charge = charge_density
 
@@ -199,6 +218,7 @@ class PoissonNEGFSCFSolver:
             poisson_result = PoissonSolveResult(self.poisson.solution, False, 0, float("inf"))
 
         electron_density = self._compute_density(self.poisson.solution.x.array, fermi)
+        self._contact_fermi = None
 
         return SCFResult(
             converged=converged,

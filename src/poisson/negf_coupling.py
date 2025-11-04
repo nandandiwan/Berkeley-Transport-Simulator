@@ -7,6 +7,9 @@ from typing import Optional, Sequence
 
 import numpy as np
 import scipy.constants as spc
+import scipy.sparse as spa
+import scipy.sparse.linalg as spla
+
 
 from negf.self_energy.surface import surface_greens_function
 from negf.self_energy.greens_functions import surface_greens_function_nn
@@ -131,8 +134,8 @@ class Lead1D:
             self.H01.conjugate().T,
             damp=1j * self.eta,
         )
-        sigma_right = self._ensure_retarded(sigma_right)
-        sigma_left = self._ensure_retarded(sigma_left)
+        # sigma_right = self._ensure_retarded(sigma_right)
+        # sigma_left = self._ensure_retarded(sigma_left)
         sigma_block = sigma_right if is_left else sigma_left
         if sigma_block.shape[0] != self.block_dim:
             raise ValueError("Lead self-energy block size mismatch for nanonet method")
@@ -215,7 +218,9 @@ class OzakiNEGF:
         Sigma_R = self.right_lead.self_energy(energy, self.size)
         identity = np.eye(self.size, dtype=np.complex128)
         mat = (energy + 1j * self.eta) * identity - H - Sigma_L - Sigma_R
-        G_R = np.linalg.inv(mat)
+        I = spa.eye(mat.shape[0])
+        mat = spa.csc_matrix(mat)
+        G_R = spla.spsolve(mat, I)
         return G_R, Sigma_L, Sigma_R
 
     def _gamma(self, sigma: np.ndarray) -> np.ndarray:
@@ -347,6 +352,14 @@ class NEGFChargeProvider:
     def density_from_lesser(self, potential: Sequence[float] | float, mu: float) -> np.ndarray:
         return self.negf.electron_density_lesser(potential, mu)
 
+    def density_from_contacts(
+        self,
+        potential: Sequence[float] | float,
+        mu_left: float,
+        mu_right: float,
+    ) -> np.ndarray:
+        return self.negf.electron_density_non_equilibrium(potential, mu_left, mu_right)
+
     def density_from_integral(
         self,
         potential: Sequence[float] | float,
@@ -365,12 +378,16 @@ class NEGFChargeProvider:
     def charge_density(
         self,
         potential: Sequence[float] | float,
-        mu: float,
+        mu_left: float,
         *,
+        mu_right: Optional[float] = None,
         net_doping: Optional[Sequence[float] | float] = None,
         extra_charge: Optional[Sequence[float] | float] = None,
     ) -> np.ndarray:
-        n = self.density_from_lesser(potential, mu)
+        if mu_right is None:
+            n = self.density_from_lesser(potential, mu_left)
+        else:
+            n = self.density_from_contacts(potential, mu_left, mu_right)
         rho = self.q * (-n)
         if net_doping is not None:
             dop = np.asarray(net_doping, dtype=float)
