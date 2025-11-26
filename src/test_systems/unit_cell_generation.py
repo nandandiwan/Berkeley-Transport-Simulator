@@ -104,11 +104,18 @@ class GrapehenearmchairCell:
     
     def create_full_structure(self):
         structure = []
+        exact_first = []
+        for atom in self.layer:
+            if np.abs(atom.x) < 1e-6:
+                exact_first.append(atom) 
+        for i in range(len(exact_first)):
+            delta = (self.sin60 * self.num_layers_x*2, 0,0)
+            exact_first[i] = exact_first[i].add(delta)
         for x in range(self.num_layers_x):
             delta = (self.sin60 * x*2, 0,0)
             new_atoms = map(lambda x: x.add(delta), self.layer)
             structure.extend(new_atoms)
-        
+        structure.extend(exact_first)
         return structure
     
     def check_in_y_direction(self, atom):

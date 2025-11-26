@@ -144,7 +144,7 @@ def iterate_gf(E, h_0, h_l, h_r, se, num_iter):
     return se
 
 
-def surface_greens_function_nn(E, h_l, h_0, h_r, iterate=False, damp=0.0001j):
+def surface_greens_function_nn(E, h_l, h_0, h_r, iterate=False, damp=1e-7j):
     """Computes surface self-energies using the eigenvalue decomposition.
     This definition is copied verbatim from the original reference implementation.
 

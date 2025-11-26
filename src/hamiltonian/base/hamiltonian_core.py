@@ -13,6 +13,7 @@ from ..tb.orbitals import Orbitals
 from ..io.xyz import dict2xyz
 from ..geometry.si_nanowire_generator import generate_sinw_xyz
 from ..geometry.simple_structure_generator import generate_1d_wire_xyz
+from ..geometry.graphene_generator import generate_graphene_xyz
 
 unique_distances = set()
 
@@ -154,6 +155,16 @@ class Hamiltonian(BasisTB):
                 # For 1D wire, also set a sensible default nearest-neighbour distance
                 if 'nn_distance' not in kwargs or kwargs['nn_distance'] is None:
                     kwargs['nn_distance'] = a * 1.01
+            elif structure in ('armchair-graphene'):
+                # Parametric silicon nanowire generation requires nx,ny,nz
+                nx, ny= self.nx, self.ny
+                a =  kwargs.get('a', 1)
+                periodic_dirs = kwargs.get('periodic_dirs', 'x')
+                passivate_x = kwargs.get('passivate_x', False)
+                kwargs['xyz'] = generate_graphene_xyz(
+                    nx=nx, ny=ny, orientation='armchair', periodic_dirs='x', passivate_x=False,
+                    title=f'Generated carbon nanowire nx={nx} ny={ny} a={a}'
+                )
             else:
                 raise ValueError("Unknown structure type: {}. Supported: 'sinw', '1d-wire'".format(structure))
         
@@ -188,7 +199,7 @@ class Hamiltonian(BasisTB):
                 return super(Hamiltonian, self).get_neighbours(query)
             if idx < 0 or idx >= self.num_of_nodes:
                 return []
-            neighbours = []
+            neighbours = [idx]
             if idx - 1 >= 0:
                 neighbours.append(idx - 1)
             if idx + 1 < self.num_of_nodes:

@@ -1,11 +1,3 @@
-"""High-level Poisson solver helpers used by the NEGF–Poisson workflow.
-
-This module factors the matrix-free SNES strategy that was originally
-implemented inside the exploratory notebook into a reusable class.  The solver
-accepts an external charge callback so that carrier densities supplied by the
-NEGF engine can be injected directly into the residual evaluation stage.
-"""
-
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -19,7 +11,7 @@ from petsc4py import PETSc
 from dolfinx import fem, mesh
 from dolfinx.fem.petsc import assemble_matrix, assemble_vector, create_vector
 
-VACUUM_PERMITTIVITY = 8.854187817e-12  # F/m
+VACUUM_PERMITTIVITY = 8.854187817e-12 
 
 
 ChargeCallback = Callable[[np.ndarray, np.ndarray], np.ndarray]
@@ -152,7 +144,7 @@ class NonlinearPoissonSolver:
 		else:
 			values = np.asarray(background, dtype=float)
 		if values.size == 1:
-			return np.full(n, float(values[0]), dtype=float)
+			return np.full(n, float(values), dtype=float)
 		if values.size == n:
 			return values.astype(float, copy=False)
 		raise ValueError("Background charge array has incompatible size")

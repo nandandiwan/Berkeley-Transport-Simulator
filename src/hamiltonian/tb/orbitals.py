@@ -19,6 +19,10 @@ class Orbitals(object):
                     atom1=SiliconSP3D5S()
                 elif base.lower()=='h':
                     atom1=HydrogenS()
+                elif base.lower()=='c':
+                    atom1=CarbonPz()
+                elif base.lower()=='cg':
+                    atom1=CarbonPz()
                 elif base.lower() == 'base':
                     atom1 = Base()
                 else:
@@ -35,6 +39,22 @@ class Orbitals(object):
         self.orbitals.append(orbital)
         self.num_of_orbitals+=1
         Orbitals.orbital_sets[self.title]=self
+    def set_orbital_energy(self, title, energy):
+        """Update the onsite energy of an orbital identified by its title."""
+        for orbital in self.orbitals:
+            if orbital['title'] == title:
+                orbital['energy'] = energy
+                Orbitals.orbital_sets[self.title] = self
+                return
+        raise ValueError('Orbital %s not found in %s' % (title, self.title))
+    @classmethod
+    def edit_orbital(cls, atom_title, orbital_title, energy):
+        """Convenience helper to tweak an atom's orbital energy at runtime."""
+        base=''.join([i for i in atom_title if not i.isdigit()])
+        if base in cls.orbital_sets and isinstance(cls.orbital_sets[base], Orbitals):
+            cls.orbital_sets[base].set_orbital_energy(orbital_title, energy)
+            return
+        raise KeyError('Atom %s not found in orbital registry' % atom_title)
     def generate_info(self):
         return print_table(self.orbitals)
 
@@ -57,6 +77,21 @@ class HydrogenS(Orbitals):
         super(HydrogenS, self).__init__('H')
         self.add_orbital('s', energy=0.9998)
         
+
+class CarbonSP(Orbitals):
+    def __init__(self):
+        super(CarbonSP, self).__init__('C')
+        # Empirical onsite energies for sp2-bonded carbon
+        self.add_orbital('s', energy=-8.97, spin=0)
+        self.add_orbital('px', energy=-3.34, orbital=1, magnetic=-1, spin=0)
+        self.add_orbital('py', energy=-3.34, orbital=1, magnetic=1, spin=0)
+        self.add_orbital('pz', energy=-3.34, orbital=1, magnetic=0, spin=0)
+
+class CarbonPz(Orbitals):
+    def __init__(self):
+        super(CarbonPz, self).__init__('Cg')
+        self.add_orbital('pz', energy=0.0, orbital=1, magnetic=0, spin=0)
+
 
 class Base(Orbitals):
     def __init__(self):

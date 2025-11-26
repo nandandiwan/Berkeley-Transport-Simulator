@@ -314,6 +314,13 @@ class GreensFunction:
             offdiag_less.append(G_lesser[r0:r0+bs, c0:c0+bs])
         return G_R, G_lesser_diag,offdiag_less,Gamma_L, Gamma_R, 
 
+    def get_self_energy_and_lead(self, E, ky=0, side = 'left'):
+        H00, H01, H10 = self.ham.get_H00_H01_H10(ky=ky, side = side)
+        sigma = self.lead_self_energy.self_energy(side, E, ky)
+        
+        return H00, H01, sigma
+        
+    
     def _compute_rgf_greens_function(self, E, ky,compute_lesser, self_energy_method, equilibrium=False,
                                      return_offdiag_lesser: bool = False):
         """

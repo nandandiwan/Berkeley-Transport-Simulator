@@ -16,6 +16,7 @@ from .recursive_greens_functions import recursive_gf
 from hamiltonian.base.block_tridiagonalization import split_into_subblocks_optimized
 from hamiltonian.base.hamiltonian_core import Hamiltonian
 from negf.gf.recursive_greens_functions import gf_inverse
+from negf.self_energy.greens_functions import surface_greens_function_nn
 from negf.utils.block_partition import (
     compute_block_sizes_block_tridiagonal,
     compute_block_sizes_metis,
@@ -24,7 +25,8 @@ from negf.utils.common import chandrupatla
 
 class GFFunctions:
     def __init__(self, ham : Hamiltonian, energy_grid: np.ndarray, k_space: np.ndarray | None = None,
-                 self_energy_method: str = "sancho_rubio", use_variable_blocks: bool = True):
+                 self_energy_method: str = "sancho_rubio", use_variable_blocks: bool = True,
+                 inverse_method: str = "auto"):
         self.ham = ham
         self.energy_grid = np.atleast_1d(energy_grid)
         self.dE = (self.energy_grid[1] - self.energy_grid[0]) if self.energy_grid.size > 1 else 1.0
@@ -36,16 +38,33 @@ class GFFunctions:
         self._force_serial = False
 
         ham_new, hL0, hLC, hR0, hRC, h_periodic = self.ham.get_hamiltonians()
-        self.ham_device = ham_new
+        self.ham_device = np.array(ham_new, copy=True, dtype=complex)
+        self._ham_device_base = np.array(self.ham_device, copy=True)
+        self._ham_diag_idx = np.diag_indices(self.ham_device.shape[0])
         self.H00 = hL0
         self.H00_right = hR0 if hR0 is not None else hL0
         self.H01 = hLC
-        self.h_k_lead = h_periodic
-        self.h_k_device = sp.block_diag([h_periodic] * (int)(ham_new.shape[0] / self.H00.shape[0]), format='csc')
+        if h_periodic is not None and h_periodic.shape[0] > 0:
+            self.h_k_lead = h_periodic
+            tiles = int(ham_new.shape[0] / self.H00.shape[0]) if self.H00.shape[0] > 0 else 0
+            if tiles > 0:
+                self.h_k_device = sp.block_diag([h_periodic] * tiles, format='csc')
+            else:
+                self.h_k_device = None
+        else:
+            self.h_k_lead = None
+            self.h_k_device = None
         self.block_size = self.H00.shape[0]
         
         self.use_variable_blocks = use_variable_blocks
+        self.inverse_method = inverse_method.lower()
+        self.mu_left = 0.0
+        self.mu_right = 0.0
         self.block_size_list: np.ndarray | None = None
+        self.occupation_mode: str = "fermi_dirac"
+        self.occupation_prefactor: float | None = None
+        self.occupation_kbT: float | None = None
+        self.self_energy_damping: float = 1e-7
         
             
         if (self.ham.periodic_dirs == None or self.ham.periodic_dirs == "x"):
@@ -53,7 +72,7 @@ class GFFunctions:
         else:
             self.transverse_periodic = True
             
-        self.kbT_eV = spc.Boltzmann / spc.elementary_charge * 300
+        self.kbT_eV = spc.Boltzmann / spc.elementary_charge * 300 * 0
 
         # Atom/orbital mapping helpers
         # Offsets come from BasisTB: cumulative start indices per atom into the orbital DOFs
@@ -83,13 +102,15 @@ class GFFunctions:
                     self.H00,
                     self.H00_right,
                     atom_offsets=self.atom_offsets,
-                    min_block_orbitals=self.H00.shape[0] // 5,
+                    min_block_orbitals=self.H00.shape[0],
                 )
                 print(self.block_size_list)
             except Exception as exc:
                 print(f"[GFFunctions] METIS partition fell back to heuristic: {exc}")
         if self.block_size_list is None:
             self.block_size_list = compute_block_sizes_block_tridiagonal(self.ham_device)
+
+        self._update_block_offsets()
 
         # if self.use_variable_blocks:
         #     self.block_size_list = compute_block_sizes_block_tridiagonal(
@@ -98,6 +119,12 @@ class GFFunctions:
         #         atom_offsets=self.atom_offsets,
         #     )
 
+    def update_hamiltonian(self, potential):
+        pot = np.asarray(potential, dtype=float)
+        self.set_fermi_levels(pot[0], pot[-1])
+        
+        self.ham_device += np.diag(pot)
+        
     def _aggregate_orbital_to_atom(self, vec_orb: np.ndarray) -> np.ndarray:
         """Sum orbital-resolved vector into atom-resolved vector.
 
@@ -143,10 +170,62 @@ class GFFunctions:
                 out[s:e] = v[a]
         return out
 
-    def _call_gf_inverse(self, E, ham_mat, H00_mat, H01_mat=None, *, processes: int = 1):
+    def set_fermi_levels(self, mu_left: float, mu_right: float):
+        self.mu_left = float(mu_left)
+        self.mu_right = float(mu_right)
+
+    def set_occupation_profile(self, mode: str = "fermi_dirac", *, prefactor: float | None = None,
+                               kbT: float | None = None):
+        mode_l = mode.lower()
+        if mode_l not in {"fermi_dirac", "fd_half"}:
+            raise ValueError("mode must be 'fermi_dirac' or 'fd_half'")
+        if mode_l == "fd_half" and (prefactor is None or kbT is None):
+            raise ValueError("fd_half mode requires prefactor and kbT values")
+        self.occupation_mode = mode_l
+        if prefactor is None:
+            self.occupation_prefactor = None
+        else:
+            pref_arr = np.asarray(prefactor, dtype=float)
+            if pref_arr.size != 1:
+                raise ValueError("prefactor must be scalar for fd_half occupation")
+            self.occupation_prefactor = float(pref_arr)
+        self.occupation_kbT = None if kbT is None else float(kbT)
+
+        def set_self_energy_damping(self, eta: float | None):
+            """Configure the imaginary energy shift (in eV) applied when evaluating surface self-energies.
+
+            Parameters
+            ----------
+            eta : float or None
+                Positive value specifies the magnitude of the complex shift ``E -> E + i*eta``.
+                If ``None`` or non-positive, the damping reverts to the default value (1e-7 eV).
+            """
+            if eta is None:
+                self.self_energy_damping = 1e-7
+                return
+            try:
+                eta_val = abs(float(eta))
+            except Exception as exc:  # pragma: no cover - defensive programming
+                raise ValueError("eta must be convertible to float") from exc
+            if eta_val == 0.0:
+                self.self_energy_damping = 1e-12
+            else:
+                self.self_energy_damping = eta_val
+
+    def _resolve_inverse_method(self) -> str:
+        method = getattr(self, "inverse_method", "auto")
+        if method == "auto":
+            if self.use_variable_blocks and self.block_size_list is not None:
+                return "var_recursive"
+            return "recursive"
+        return method
+
+    def _call_gf_inverse(self, E, ham_mat, H00_mat, H01_mat=None, H00_right_mat=None, *, processes: int = 1):
         H01_use = H01_mat if H01_mat is not None else self.H01
+        H00_right_use = H00_right_mat if H00_right_mat is not None else self.H00_right
         block_size = H01_use.shape[0]
-        return _gf_inverse_dispatch(
+        method = self._resolve_inverse_method()
+        result = _gf_inverse_dispatch(
             E,
             ham_mat,
             H00_mat,
@@ -155,7 +234,50 @@ class GFFunctions:
             block_size_list=self.block_size_list,
             use_variable_blocks=self.use_variable_blocks,
             processes=processes,
+            method=method,
+            mu_left=self.mu_left,
+            mu_right=self.mu_right,
+            H00_right=H00_right_use,
+            occupation_mode=self.occupation_mode,
+            occupation_prefactor=self.occupation_prefactor,
+            occupation_kbT=self.occupation_kbT,
+            self_energy_damp=self.self_energy_damping,
         )
+        if method == "direct":
+            G_R_full, G_lesser_diag, G_lesser_offdiag_right, Gamma_L, Gamma_R = result
+            return np.diag(G_R_full), G_lesser_diag, G_lesser_offdiag_right, Gamma_L, Gamma_R
+        return result
+
+    def _update_block_offsets(self):
+        if self.use_variable_blocks and self.block_size_list is not None:
+            self._block_offsets = np.cumsum(np.concatenate(([0], self.block_size_list.astype(int))))
+        else:
+            step = int(self.H00.shape[0]) if self.H00 is not None else 1
+            total = self.ham_device.shape[0]
+            if step <= 0:
+                step = 1
+            self._block_offsets = np.arange(0, total + 1, step, dtype=int)
+
+    def _bond_current_integrand(self, G_lesser_offdiag_right):
+        offsets = getattr(self, "_block_offsets", None)
+        if offsets is None or offsets.size < 2:
+            return np.zeros(0, dtype=float)
+        num_blocks = offsets.size - 1
+        if num_blocks <= 1:
+            return np.zeros(0, dtype=float)
+        bond_vals = np.zeros(num_blocks - 1, dtype=float)
+        for i in range(num_blocks - 1):
+            start_row = int(offsets[i])
+            end_row = int(offsets[i + 1])
+            start_col = int(offsets[i + 1])
+            end_col = int(offsets[i + 2])
+            H_ij = self.ham_device[start_row:end_row, start_col:end_col]
+            G_lesser_ji = G_lesser_offdiag_right[i]
+            if G_lesser_ji.shape[0] == H_ij.shape[0] and G_lesser_ji.shape[1] == H_ij.shape[1]:
+                G_lesser_ji = G_lesser_ji.T
+            trace_val = np.trace(H_ij @ G_lesser_ji)
+            bond_vals[i] = np.imag(trace_val)
+        return bond_vals
         
     
     def _ldos_key(self, E, ky) -> tuple[float, float]:
@@ -218,9 +340,23 @@ class GFFunctions:
         except Exception:
             # If cache proxy not behaving like a normal mapping, ignore and compute
             pass
-        ham_device = self.ham_device + self.h_k_device * np.exp(1j * ky) + self.h_k_device.T * np.exp(-1j * ky)
-        H00 = self.H00 + self.h_k_lead * np.exp(1j * ky) + self.h_k_lead.T * np.exp(-1j * ky)
-        G_R_diag, G_lesser_diag, G_lesser_offdiag_right, Gamma_L, Gamma_R = self._call_gf_inverse(E, ham_device, H00, self.H01)
+        ham_device = np.array(self.ham_device, copy=True, dtype=complex)
+        if self.h_k_device is not None:
+            h_dev = self.h_k_device.toarray() if sp.issparse(self.h_k_device) else np.asarray(self.h_k_device)
+            ham_device += h_dev * np.exp(1j * ky)
+            ham_device += h_dev.T * np.exp(-1j * ky)
+
+        H00_left = np.array(self.H00, copy=True, dtype=complex)
+        if self.h_k_lead is not None:
+            h_lead = self.h_k_lead.toarray() if sp.issparse(self.h_k_lead) else np.asarray(self.h_k_lead)
+            H00_left = H00_left + h_lead * np.exp(1j * ky) + h_lead.T * np.exp(-1j * ky)
+
+        H00_right = np.array(self.H00_right, copy=True, dtype=complex)
+        if self.h_k_lead is not None:
+            H00_right = H00_right + h_lead * np.exp(1j * ky) + h_lead.T * np.exp(-1j * ky)
+        G_R_diag, G_lesser_diag, G_lesser_offdiag_right, Gamma_L, Gamma_R = self._call_gf_inverse(
+            E, ham_device, H00_left, self.H01, H00_right_mat=H00_right
+        )
         ldos_vec = -1.0 / np.pi * np.imag(G_R_diag)
         try:
             self.LDOS_cache[key] = ldos_vec
@@ -265,8 +401,9 @@ class GFFunctions:
                 continue
             # Pass shared cache proxy to worker if available
             cache_ref = self.LDOS_cache if hasattr(self.LDOS_cache, '_callmethod') else None
-            payloads.append((E_grid[sl], self.ham_device, self.H00, self.H01, self.k_space, norm_k,
-                              self.block_size_list, self.use_variable_blocks, cache_ref))
+            payloads.append((E_grid[sl], self.ham_device, self.H00, self.H00_right, self.H01, self.k_space, norm_k,
+                             self.block_size_list, self.use_variable_blocks, cache_ref,
+                             self.h_k_device, self.h_k_lead, self.self_energy_damping))
         _mgr = self._ensure_shared_cache(P)
         try:
             ctx = mp.get_context('fork') if hasattr(mp, 'get_context') else mp
@@ -345,14 +482,17 @@ class GFFunctions:
         if processes <= 1 or k_points.size == 1:
             densities = []
             for ky in k_points:
-                densities.append(GFFunctions._density_k_worker_static((float(ky), E_grid, self.ham_device, self.H00, self.H01,
-                                                           poles, residues, V_orb, Efn_orb, conduction_only, Ec_arr, dE,
-                                                           self.H00.shape[0], self.block_size_list, self.use_variable_blocks, None)))
+                densities.append(GFFunctions._density_k_worker_static((float(ky), E_grid, self.ham_device, self.H00,
+                                                           self.H00_right, self.H01, poles, residues, V_orb, Efn_orb,
+                                                           conduction_only, Ec_arr, dE, self.H00.shape[0],
+                                                           self.block_size_list, self.use_variable_blocks, None,
+                                                           self.h_k_device, self.h_k_lead)))
         else:
             cache_ref = self.LDOS_cache if hasattr(self.LDOS_cache, '_callmethod') else None
-            payloads = [(float(ky), E_grid, self.ham_device, self.H00, self.H01,
+            payloads = [(float(ky), E_grid, self.ham_device, self.H00, self.H00_right, self.H01,
                          poles, residues, V_orb, Efn_orb, conduction_only, Ec_arr, dE, self.H00.shape[0],
-                         self.block_size_list, self.use_variable_blocks, cache_ref)
+                         self.block_size_list, self.use_variable_blocks, cache_ref,
+                         self.h_k_device, self.h_k_lead)
                         for ky in k_points]
             _mgr = self._ensure_shared_cache(processes)
             try:
@@ -363,9 +503,11 @@ class GFFunctions:
                 print(f"[get_n] Parallel fallback to serial due to: {exc}")
                 densities = []
                 for ky in k_points:
-                    densities.append(GFFunctions._density_k_worker_static((float(ky), E_grid, self.ham_device, self.H00, self.H01,
-                                                               poles, residues, V_orb, Efn_orb, conduction_only, Ec_arr, dE,
-                                                               self.H00.shape[0], self.block_size_list, self.use_variable_blocks, None)))
+                    densities.append(GFFunctions._density_k_worker_static((float(ky), E_grid, self.ham_device, self.H00,
+                                                               self.H00_right, self.H01, poles, residues, V_orb, Efn_orb,
+                                                               conduction_only, Ec_arr, dE, self.H00.shape[0],
+                                                               self.block_size_list, self.use_variable_blocks, None,
+                                                               self.h_k_device, self.h_k_lead)))
             finally:
                 self._finalize_shared_cache(_mgr)
 
@@ -392,10 +534,15 @@ class GFFunctions:
 
     def transmission_worker(self, E):
         """Serial transmission helper using direct inversion."""
-        G_R, _, Gamma_L, Gamma_R = gf_inverse(E, self.ham_device, self.H00, self.H01, method="direct")
-        G_A = sp.csc_matrix(G_R.T.conj())
-        G_R = sp.csc_matrix(G_R)
-        return float(np.real(np.trace(Gamma_L @ G_R @ Gamma_R @ G_A)))
+        return _caroli_transmission(
+            E,
+            self.ham_device,
+            self.H00,
+            self.H01,
+            self.H00_right,
+            getattr(self, "H01_right", None),
+            self.self_energy_damping,
+        )
 
     def transmission(self, processes: int = 1, average_over_k: bool = True) -> np.ndarray:
         """Compute transmission T(E) averaged over k (if ``average_over_k``).
@@ -413,7 +560,18 @@ class GFFunctions:
             return np.array([self.transmission_worker(E) for E in E_grid], dtype=float)
 
         # Parallel path: build lightweight payload without embedding self (which is not picklable due to lambdas in Hamiltonian)
-        payloads = [(float(E), self.ham_device, self.H00, self.H01) for E in E_grid]
+        payloads = [
+            (
+                float(E),
+                self.ham_device,
+                self.H00,
+                self.H01,
+                self.H00_right,
+                getattr(self, "H01_right", None),
+                self.self_energy_damping,
+            )
+            for E in E_grid
+        ]
         _mgr = self._ensure_shared_cache(processes)
         try:
             # Prefer 'fork' when available to reduce serialization overhead
@@ -434,27 +592,43 @@ class GFFunctions:
             self.H00,
             self.H01,
         )
-        if self.use_variable_blocks and self.block_size_list is not None:
-            offsets = np.cumsum(np.concatenate(([0], self.block_size_list.astype(int))))
-        else:
-            step = self.block_size
-            offsets = np.arange(0, self.ham_device.shape[0] + 1, step)
-        num_blocks = offsets.size - 1
-        bond_current_integrands = []
-        for i in range(num_blocks - 1):
-            start_row = int(offsets[i])
-            end_row = int(offsets[i + 1])
-            start_col = int(offsets[i + 1])
-            end_col = int(offsets[i + 2])
-            H_ij = self.ham_device[start_row:end_row, start_col:end_col]
-            G_lesser_ji = G_lesser_offdiag_right[i]
-            product_matrix = H_ij @ G_lesser_ji
-            trace_val = np.trace(product_matrix)
-            bond_current_integrands.append(np.imag(trace_val))
-            
-        return np.array(bond_current_integrands)
+        if len(G_lesser_offdiag_right) == 0:
+            return np.zeros(0, dtype=float)
+        return self._bond_current_integrand(G_lesser_offdiag_right)
 
-    def compute_charge_density(self, *, method: str = "lesser", processes: int = 1) -> np.ndarray:
+    def bond_current(self, processes: int = 1, *, return_energy_resolved: bool = False):
+        if getattr(self, '_force_serial', False):
+            processes = 1
+        offsets = getattr(self, '_block_offsets', None)
+        if offsets is None or offsets.size < 2:
+            return (np.zeros(0, dtype=float), np.zeros((self.energy_grid.size, 0), dtype=float)) if return_energy_resolved else np.zeros(0, dtype=float)
+        num_blocks = offsets.size - 1
+        if num_blocks <= 1:
+            return (np.zeros(0, dtype=float), np.zeros((self.energy_grid.size, 0), dtype=float)) if return_energy_resolved else np.zeros(0, dtype=float)
+
+        E_grid = self.energy_grid
+        nE = E_grid.size
+        integrand = np.zeros((nE, num_blocks - 1), dtype=float)
+
+        for idx, E in enumerate(E_grid):
+            integrand[idx, :] = self.current_worker(E)
+
+        energy_joules = E_grid * spc.elementary_charge
+        currents = np.zeros(num_blocks - 1, dtype=float)
+        for bond in range(num_blocks - 1):
+            currents[bond] = (2.0 * spc.elementary_charge / spc.h) * np.trapz(integrand[:, bond], energy_joules)
+
+        if return_energy_resolved:
+            return currents, integrand
+        return currents
+
+    def compute_charge_density(
+        self,
+        *,
+        method: str = "lesser",
+        processes: int = 1,
+        density_scale: float | np.ndarray | None = None,
+    ) -> np.ndarray:
         """Compute electron number per site via integration over energy.
 
         When method == 'lesser', integrates using the diagonal of G^< returned by
@@ -485,15 +659,41 @@ class GFFunctions:
             for E in E_grid:
                 accum_k = np.zeros(n_orb, dtype=complex)
                 for ky in self.k_space:
-                    ham_k = self.ham_device + self.h_k_device * np.exp(1j * ky) + self.h_k_device.T * np.exp(-1j * ky)
-                    H00_k = self.H00 + self.h_k_lead * np.exp(1j * ky) + self.h_k_lead.T * np.exp(-1j * ky)
+                    ham_k = np.array(self.ham_device, copy=True, dtype=complex)
+                    if self.h_k_device is not None:
+                        h_dev = self.h_k_device.toarray() if sp.issparse(self.h_k_device) else np.asarray(self.h_k_device)
+                        ham_k += h_dev * np.exp(1j * ky)
+                        ham_k += h_dev.T * np.exp(-1j * ky)
+
+                    H00_k = np.array(self.H00, copy=True, dtype=complex)
+                    if self.h_k_lead is not None:
+                        h_lead = self.h_k_lead.toarray() if sp.issparse(self.h_k_lead) else np.asarray(self.h_k_lead)
+                        H00_k = H00_k + h_lead * np.exp(1j * ky) + h_lead.T * np.exp(-1j * ky)
+
+                    H00_right_k = np.array(self.H00_right, copy=True, dtype=complex)
+                    
+                    if self.h_k_lead is not None:
+                        H00_right_k = H00_right_k + h_lead * np.exp(1j * ky) + h_lead.T * np.exp(-1j * ky)
                     # Use recursive method to obtain G^< diagonal
-                    _, G_lesser_diag, _, _, _ = self._call_gf_inverse(E, ham_k, H00_k, self.H01)
+                    _, G_lesser_diag, _, _, _ = self._call_gf_inverse(E, ham_k, H00_k, self.H01, H00_right_mat=H00_right_k)
+                    
+                    
                     G_n_diag = -1j * G_lesser_diag
+                    
+                    
                     accum_k += (dE * G_n_diag) / (2.0 * np.pi)
                 density_orb += np.real(accum_k) / norm_k
             # Aggregate orbitals -> atoms
-            return self._aggregate_orbital_to_atom(density_orb)
+            density_sites = self._aggregate_orbital_to_atom(density_orb)
+            if density_scale is not None:
+                scale = np.asarray(density_scale, dtype=float)
+                if scale.size == 1:
+                    density_sites = density_sites * float(scale)
+                elif scale.shape == density_sites.shape:
+                    density_sites = density_sites * scale
+                else:
+                    raise ValueError("density_scale must be a scalar or match the density vector length.")
+            return density_sites
 
         # Parallel path: partition energy grid contiguously
         P = min(processes, nE)
@@ -503,8 +703,10 @@ class GFFunctions:
             sl = slice(bounds[p], bounds[p+1])
             if sl.start == sl.stop:
                 continue
-            payloads.append((E_grid[sl], self.ham_device, self.H00, self.H01, self.h_k_device, self.h_k_lead,
-                             self.k_space, block_size, self.block_size_list, self.use_variable_blocks, dE))
+            payloads.append((E_grid[sl], self.ham_device, self.H00, self.H00_right, self.H01, self.h_k_device, self.h_k_lead,
+                             self.k_space, block_size, self.block_size_list, self.use_variable_blocks, dE,
+                             float(self.mu_left), float(self.mu_right), self.occupation_mode,
+                             self.occupation_prefactor, self.occupation_kbT, self.self_energy_damping))
 
         try:
             ctx = mp.get_context('fork') if hasattr(mp, 'get_context') else mp
@@ -512,22 +714,33 @@ class GFFunctions:
                 parts = pool.map(_density_lesser_slice_worker_static, payloads)
         except Exception as exc:
             print(f"[compute_charge_density] Parallel fallback to serial due to: {exc}")
-            return self.compute_charge_density(method=method, processes=1)
+            return self.compute_charge_density(method=method, processes=1, density_scale=density_scale)
 
         # Sum contributions from slices and average over k-points
         total_orb = np.sum(np.vstack(parts), axis=0) / norm_k
-        return self._aggregate_orbital_to_atom(total_orb)
+        density_sites = self._aggregate_orbital_to_atom(total_orb)
+        if density_scale is not None:
+            scale = np.asarray(density_scale, dtype=float)
+            if scale.size == 1:
+                density_sites = density_sites * float(scale)
+            elif scale.shape == density_sites.shape:
+                density_sites = density_sites * scale
+            else:
+                raise ValueError("density_scale must be a scalar or match the density vector length.")
+        return density_sites
 
  
-    def _density_k_worker_static(payload: tuple[float, np.ndarray, np.ndarray, np.ndarray, np.ndarray,
+    def _density_k_worker_static(payload: tuple[float, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray,
                                                 np.ndarray, np.ndarray, np.ndarray, np.ndarray,
-                                                bool, np.ndarray, float, int, Any | None]) -> np.ndarray:
+                                                bool, np.ndarray, float, int, np.ndarray | None,
+                                                bool, Any | None, np.ndarray | None, np.ndarray | None]) -> np.ndarray:
         """Compute carrier density contribution for a single k-point using Ozaki CFR.
 
         Returns density vector (n_sites,).
         """
-        (ky, E_grid, ham_device, H00, H01, poles, residues, V, Efn,
-        conduction_only, Ec_arr, dE, block_size, block_size_list, use_var_blocks, cache_ref) = payload
+        (ky, E_grid, ham_device, H00_left, H00_right, H01, poles, residues, V, Efn,
+         conduction_only, Ec_arr, dE, block_size, block_size_list, use_var_blocks, cache_ref,
+         h_k_device, h_k_lead) = payload
         n_sites = V.size
         nE = E_grid.size
         ldos_mat = np.zeros((nE, n_sites), dtype=float)
@@ -541,14 +754,32 @@ class GFFunctions:
                 except Exception:
                     ldos_vec = None
             if ldos_vec is None:
+                ham_k = np.array(ham_device, copy=True, dtype=complex)
+                if h_k_device is not None:
+                    h_dev = h_k_device.toarray() if sp.issparse(h_k_device) else np.asarray(h_k_device)
+                    ham_k += h_dev * np.exp(1j * ky)
+                    ham_k += h_dev.T * np.exp(-1j * ky)
+
+                H00_k = np.array(H00_left, copy=True, dtype=complex)
+                h_lead_dense = None
+                if h_k_lead is not None:
+                    h_lead_dense = h_k_lead.toarray() if sp.issparse(h_k_lead) else np.asarray(h_k_lead)
+                    H00_k = H00_k + h_lead_dense * np.exp(1j * ky) + h_lead_dense.T * np.exp(-1j * ky)
+
+                H00_right_k = np.array(H00_right, copy=True, dtype=complex)
+                
+                if h_lead_dense is not None:
+                    H00_right_k = H00_right_k + h_lead_dense * np.exp(1j * ky) + h_lead_dense.T * np.exp(-1j * ky)
+
                 G_R_diag, _, _, _, _ = _gf_inverse_dispatch(
                     E,
-                    ham_device,
-                    H00,
+                    ham_k,
+                    H00_k,
                     H01,
                     block_size=block_size,
                     block_size_list=block_size_list,
                     use_variable_blocks=use_var_blocks,
+                    H00_right=H00_right_k,
                 )
                 ldos_vec = -1/np.pi * np.imag(G_R_diag)
                 try:
@@ -603,7 +834,17 @@ class GFFunctions:
         return roots
             
 
-def _transmission_worker_static(payload: tuple[float, np.ndarray, np.ndarray, np.ndarray]) -> float:
+def _transmission_worker_static(
+    payload: tuple[
+        float,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray | None,
+        np.ndarray | None,
+        float,
+    ]
+) -> float:
     """Top-level picklable worker for transmission(E).
 
     Parameters
@@ -615,22 +856,87 @@ def _transmission_worker_static(payload: tuple[float, np.ndarray, np.ndarray, np
     float
         Transmission value at energy E.
     """
-    E, ham_device, H00, H01 = payload
-    G_R, _, Gamma_L, Gamma_R = gf_inverse(E, ham_device, H00, H01, method="direct")
-    G_A = sp.csc_matrix(G_R.T.conj())
-    G_R = sp.csc_matrix(G_R)
-    return float(np.real(np.trace(Gamma_L @ G_R @ Gamma_R @ G_A)))
+    E, ham_device, H00, H01, H00_right, H01_right, self_energy_damp = payload
+    return _caroli_transmission(
+        E,
+        ham_device,
+        H00,
+        H01,
+        H00_right,
+        H01_right,
+        self_energy_damp,
+    )
 
 
-def _dos_slice_worker_static(payload: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, int, np.ndarray | None, bool, Any | None]) -> np.ndarray:
+def _caroli_transmission(
+    energy: float,
+    ham_device: np.ndarray,
+    H00_left: np.ndarray,
+    H01_left: np.ndarray,
+    H00_right: np.ndarray | None,
+    H01_right: np.ndarray | None,
+    self_energy_damp: float,
+) -> float:
+    H_dev = ham_device.toarray() if sp.issparse(ham_device) else np.asarray(ham_device, dtype=complex)
+    H00_L = H00_left.toarray() if sp.issparse(H00_left) else np.asarray(H00_left, dtype=complex)
+    tau_L = H01_left.toarray() if sp.issparse(H01_left) else np.asarray(H01_left, dtype=complex)
+    H00_R = H00_right if H00_right is not None else H00_L
+    tau_R = H01_right if H01_right is not None else tau_L
+    H00_R = H00_R.toarray() if sp.issparse(H00_R) else np.asarray(H00_R, dtype=complex)
+    tau_R = tau_R.toarray() if sp.issparse(tau_R) else np.asarray(tau_R, dtype=complex)
+
+    damp = 1j * abs(float(self_energy_damp)) if self_energy_damp is not None else 1e-7j
+
+    sigma_L_raw = surface_greens_function_nn(energy, tau_L, H00_L, tau_L.conj().T, damp=damp)
+    sigma_R_raw = surface_greens_function_nn(energy, tau_R, H00_R, tau_R.conj().T, damp=damp)
+
+    if isinstance(sigma_L_raw, tuple):
+        sigma_L = sigma_L_raw[1]
+    else:
+        sigma_L = sigma_L_raw
+    if isinstance(sigma_R_raw, tuple):
+        sigma_R = sigma_R_raw[0]
+    else:
+        sigma_R = sigma_R_raw
+
+    sigma_L = sigma_L.toarray() if sp.issparse(sigma_L) else np.asarray(sigma_L, dtype=complex)
+    sigma_R = sigma_R.toarray() if sp.issparse(sigma_R) else np.asarray(sigma_R, dtype=complex)
+
+    gamma_L = 1j * (sigma_L - sigma_L.conj().T)
+    gamma_R = 1j * (sigma_R - sigma_R.conj().T)
+
+    n = H_dev.shape[0]
+    left_dim = gamma_L.shape[0]
+    right_dim = gamma_R.shape[0]
+
+    sigma_L_full = np.zeros((n, n), dtype=complex)
+    sigma_R_full = np.zeros((n, n), dtype=complex)
+    sigma_L_full[:left_dim, :left_dim] = sigma_L
+    sigma_R_full[-right_dim:, -right_dim:] = sigma_R
+
+    eta = 1e-12
+    A = (energy + 1j * eta) * np.eye(n, dtype=complex) - (H_dev + sigma_L_full + sigma_R_full)
+    G_R = np.linalg.solve(A, np.eye(n, dtype=complex))
+
+    G_lr = G_R[:left_dim, n - right_dim :]
+    T_val = np.real(np.trace(gamma_L @ G_lr @ gamma_R @ G_lr.conj().T))
+    return float(T_val)
+
+
+def _dos_slice_worker_static(payload: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray,
+                                            np.ndarray, int, np.ndarray | None, bool, Any | None,
+                                            np.ndarray | None, np.ndarray | None, float]) -> np.ndarray:
     """Worker computing DOS for a contiguous slice of energies.
 
     Parameters
     ----------
     payload : tuple
-        (E_slice, ham_device, H00, H01, k_space, norm_k, cache_ref)
+        (E_slice, ham_device, H00_left, H00_right, H01, k_space, norm_k, block_size_list,
+         use_var_blocks, cache_ref, h_k_device, h_k_lead)
     """
-    E_slice, ham_device, H00, H01, k_space, norm_k, block_size_list, use_var_blocks, cache_ref = payload
+    (E_slice, ham_device, H00_left, H00_right, H01, k_space, norm_k,
+     block_size_list, use_var_blocks, cache_ref, h_k_device, h_k_lead,
+     self_energy_damp) = payload
     out = np.zeros(E_slice.size, dtype=float)
     for i, E in enumerate(E_slice):
         acc = 0.0
@@ -645,14 +951,33 @@ def _dos_slice_worker_static(payload: tuple[np.ndarray, np.ndarray, np.ndarray, 
                 except Exception:
                     ldos_vec = None
             if ldos_vec is None:
+                ham_k = np.array(ham_device, copy=True, dtype=complex)
+                if h_k_device is not None:
+                    h_dev = h_k_device.toarray() if sp.issparse(h_k_device) else np.asarray(h_k_device)
+                    ham_k += h_dev * np.exp(1j * ky)
+                    ham_k += h_dev.T * np.exp(-1j * ky)
+
+                H00_k = np.array(H00_left, copy=True, dtype=complex)
+                h_lead_dense = None
+                if h_k_lead is not None:
+                    h_lead_dense = h_k_lead.toarray() if sp.issparse(h_k_lead) else np.asarray(h_k_lead)
+                    H00_k = H00_k + h_lead_dense * np.exp(1j * ky) + h_lead_dense.T * np.exp(-1j * ky)
+
+                H00_right_k = np.array(H00_right, copy=True, dtype=complex)
+                if h_lead_dense is not None:
+                    H00_right_k = H00_right_k + h_lead_dense * np.exp(1j * ky) + h_lead_dense.T * np.exp(-1j * ky)
+
                 G_R_diag, _, _, _, _ = _gf_inverse_dispatch(
                     E,
-                    ham_device,
-                    H00,
+                    ham_k,
+                    H00_k,
                     H01,
-                    block_size=H00.shape[0],
+                    block_size=H00_left.shape[0],
                     block_size_list=block_size_list,
                     use_variable_blocks=use_var_blocks,
+                    method="recursive",
+                    H00_right=H00_right_k,
+                    self_energy_damp=self_energy_damp,
                 )
                 ldos_vec = -1/np.pi * np.imag(G_R_diag)
                 try:
@@ -666,29 +991,44 @@ def _dos_slice_worker_static(payload: tuple[np.ndarray, np.ndarray, np.ndarray, 
 
 
 def _density_lesser_slice_worker_static(payload: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray,
-                                                       np.ndarray, np.ndarray, np.ndarray, int,
-                                                       np.ndarray | None, bool, float]) -> np.ndarray:
+                                                       np.ndarray, np.ndarray | None, np.ndarray | None, np.ndarray,
+                                                       int, np.ndarray | None, bool, float, float, float, float]) -> np.ndarray:
     """Worker that integrates density over a contiguous slice of energies using G^<.
 
     Parameters
     ----------
     payload : tuple
-        (E_slice, ham_device, H00, H01, h_k_device, h_k_lead, k_space, block_size, dE)
+        (E_slice, ham_device, H00_left, H00_right, H01, h_k_device, h_k_lead, k_space,
+         block_size, block_size_list, use_var_blocks, dE)
 
     Returns
     -------
     np.ndarray
         Partial density vector (n_sites,) integrated over the slice; caller averages over k.
     """
-    (E_slice, ham_device, H00, H01, h_k_device, h_k_lead, k_space, block_size,
-     block_size_list, use_var_blocks, dE) = payload
+    (E_slice, ham_device, H00_left, H00_right, H01, h_k_device, h_k_lead, k_space, block_size,
+     block_size_list, use_var_blocks, dE, mu_left, mu_right, occupation_mode,
+     occupation_prefactor, occupation_kbT, self_energy_damp) = payload
     n_sites = ham_device.shape[0]
     out = np.zeros(n_sites, dtype=float)
     for E in E_slice:
         accum_k = np.zeros(n_sites, dtype=complex)
         for ky in k_space:
-            ham_k = ham_device + h_k_device * np.exp(1j * ky) + h_k_device.T * np.exp(-1j * ky)
-            H00_k = H00 + h_k_lead * np.exp(1j * ky) + h_k_lead.T * np.exp(-1j * ky)
+            ham_k = np.array(ham_device, copy=True, dtype=complex)
+            if h_k_device is not None:
+                h_dev = h_k_device.toarray() if sp.issparse(h_k_device) else np.asarray(h_k_device)
+                ham_k += h_dev * np.exp(1j * ky)
+                ham_k += h_dev.T * np.exp(-1j * ky)
+
+            H00_k = np.array(H00_left, copy=True, dtype=complex)
+            h_lead_dense = None
+            if h_k_lead is not None:
+                h_lead_dense = h_k_lead.toarray() if sp.issparse(h_k_lead) else np.asarray(h_k_lead)
+                H00_k = H00_k + h_lead_dense * np.exp(1j * ky) + h_lead_dense.T * np.exp(-1j * ky)
+
+            H00_right_k = np.array(H00_right, copy=True, dtype=complex)
+            if h_lead_dense is not None:
+                H00_right_k = H00_right_k + h_lead_dense * np.exp(1j * ky) + h_lead_dense.T * np.exp(-1j * ky)
             _, G_lesser_diag, _, _, _ = _gf_inverse_dispatch(
                 E,
                 ham_k,
@@ -697,6 +1037,14 @@ def _density_lesser_slice_worker_static(payload: tuple[np.ndarray, np.ndarray, n
                 block_size=block_size,
                 block_size_list=block_size_list,
                 use_variable_blocks=use_var_blocks,
+                method="var_recursive",
+                H00_right=H00_right_k,
+                mu_left=mu_left,
+                mu_right=mu_right,
+                occupation_mode=occupation_mode,
+                occupation_prefactor=occupation_prefactor,
+                occupation_kbT=occupation_kbT,
+                self_energy_damp=self_energy_damp,
             )
             G_n_diag = -1j * G_lesser_diag
             accum_k += (dE * G_n_diag) / (2.0 * np.pi)
@@ -705,23 +1053,74 @@ def _density_lesser_slice_worker_static(payload: tuple[np.ndarray, np.ndarray, n
 
 
 def _gf_inverse_dispatch(E, ham_device, H00, H01, *, block_size: int, block_size_list: np.ndarray | None,
-                         use_variable_blocks: bool, processes: int = 1):
-    if use_variable_blocks and block_size_list is not None:
+                         use_variable_blocks: bool, processes: int = 1, method: str | None = None,
+                         mu_left: float = 0.0, mu_right: float = 0.0,
+                         H00_right: np.ndarray | None = None,
+                         occupation_mode: str = "fermi_dirac",
+                         occupation_prefactor: float | None = None,
+                         occupation_kbT: float | None = None,
+                         self_energy_damp: float = 1e-7):
+    selected_method = method
+    if selected_method is None or selected_method == "auto":
+        if use_variable_blocks and block_size_list is not None:
+            selected_method = "var_recursive"
+        else:
+            selected_method = "recursive"
+
+    if selected_method == "direct":
         return gf_inverse(
             E,
             ham_device,
             H00,
             H01,
+            mu_left,
+            mu_right,
+            block_size=block_size,
+            block_size_list=block_size_list,
+            method="direct",
+            processes=processes,
+            H00_right=H00_right,
+            occupation_mode=occupation_mode,
+            occupation_prefactor=occupation_prefactor,
+            occupation_kbT=occupation_kbT,
+            self_energy_damp=self_energy_damp,
+        )
+
+    if selected_method == "var_recursive":
+        
+        return gf_inverse(
+            E,
+            ham_device,
+            H00,
+            H01,
+            mu_left,
+            mu_right,
             block_size_list=block_size_list,
             method="var_recursive",
             processes=processes,
+            H00_right=H00_right,
+            occupation_mode=occupation_mode,
+            occupation_prefactor=occupation_prefactor,
+            occupation_kbT=occupation_kbT,
+            self_energy_damp=self_energy_damp,
         )
-    return gf_inverse(
-        E,
-        ham_device,
-        H00,
-        H01,
-        block_size=block_size,
-        method="recursive",
-    )
+
+    if selected_method == "recursive":
+        return gf_inverse(
+            E,
+            ham_device,
+            H00,
+            H01,
+            mu_left,
+            mu_right,
+            block_size=block_size,
+            method="recursive",
+            H00_right=H00_right,
+            occupation_mode=occupation_mode,
+            occupation_prefactor=occupation_prefactor,
+            occupation_kbT=occupation_kbT,
+            self_energy_damp=self_energy_damp,
+        )
+
+    raise ValueError(f"Unsupported inversion method '{selected_method}'.")
 

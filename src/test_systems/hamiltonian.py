@@ -98,8 +98,8 @@ class Hamiltonian:
         if (self.name != "one_d_wire"): # base linear potential for graphene is not in place
             self.mock_potential = False
         
-        if (self.name == "armchair"):
-            self.unit_cell = GrapehenearmchairCell(num_layers_x=self.Nx, num_layers_y=self.Ny, periodic=self.periodic)
+        # if (self.name == "armchair"):
+        #     self.unit_cell = GrapehenearmchairCell(num_layers_x=self.Nx, num_layers_y=self.Ny, periodic=self.periodic)
             
     
     def get_num_sites(self):

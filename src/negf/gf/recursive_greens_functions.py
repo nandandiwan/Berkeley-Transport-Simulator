@@ -3,10 +3,11 @@ from typing import List
 
 import numpy as np
 import scipy.sparse as sp
+import scipy.constants as spc
 #from negf.self_energy.surface import surface_greens_function
 from negf.self_energy.surface import surface_greens_function
 from negf.self_energy.greens_functions import surface_greens_function_nn
-from negf.utils.common import fermi_dirac, smart_inverse
+from negf.utils.common import fermi_dirac, smart_inverse, FD_minus_half
 import scipy.linalg as linalg
 from negf.gf.general_rgf.pairwise_partial_inverse import pairwise_partial_inverse
 
@@ -51,20 +52,85 @@ def recursive_gf(energy, mat_l_list, mat_d_list, mat_u_list, left_se=None, right
 def add_eta(E):
     return E + 1e-9j
 
-def gf_inverse(E, H, H00, H01, mu1 = 0, mu2 = 0, block_size = None, block_size_list = None, method : str= "recursive", processes = 1):
+def gf_inverse(
+    E,
+    H,
+    H00,
+    H01,
+    mu1=0,
+    mu2=0,
+    block_size=None,
+    block_size_list=None,
+    method: str = "recursive",
+    processes=1,
+    H00_right=None,
+    occupation_mode: str = "fermi_dirac",
+    occupation_prefactor: float | None = None,
+    occupation_kbT: float | None = None,
+    self_energy_damp: float = 1e-9,
+):
     
-    Sigma_L, Sigma_R = surface_greens_function_nn(E, H01, H00, H01.conj().T)
+    def _occupation_factor(energy, mu, mode, prefactor, kbT):
+        if mode == "fermi_dirac":
+            return fermi_dirac(energy, mu)
+        if mode == "fd_half":
+            if kbT is None or prefactor is None:
+                raise ValueError("fd_half occupation requires kbT and prefactor")
+            arg = -spc.elementary_charge * (np.real(energy) - mu) / kbT
+            return prefactor * FD_minus_half(arg)
+        raise ValueError(f"Unknown occupation mode '{mode}'")
+
+    if H00_right is None:
+        H00_right = H00
+    
+    damp_complex = 1j * abs(float(self_energy_damp)) if self_energy_damp is not None else 1e-7j
+
+    Sigma_L_raw = surface_greens_function_nn(E - mu1, H01, H00, H01.conj().T, damp=damp_complex)
+    
+    if isinstance(Sigma_L_raw, tuple):
+        # surface_greens_function_nn returns (sgf_r, sgf_l); select left component
+        Sigma_L = Sigma_L_raw[1]
+    else:
+        Sigma_L = Sigma_L_raw
+    
+    Sigma_R_raw = surface_greens_function_nn(E - mu2, H01, H00_right, H01.conj().T, damp=damp_complex)
+   
+    if isinstance(Sigma_R_raw, tuple):
+        # First tuple entry corresponds to the right-lead self-energy
+        Sigma_R = Sigma_R_raw[0]
+    else:
+        Sigma_R = Sigma_R_raw
+    #print(Sigma_L, Sigma_R)
+    occ_left = _occupation_factor(E, mu1, occupation_mode, occupation_prefactor, occupation_kbT)
+    occ_right = _occupation_factor(E, mu2, occupation_mode, occupation_prefactor, occupation_kbT)
 
     
-    if (method == "direct"):
-        return _direct_inverse(E, H, Sigma_L, Sigma_R, mu1, mu2)  
-    if (method == "recursive"):
-        return _recursive_inverse(E, H, H00, H01, mu1, mu2, block_size)
-    if (method == "var_recursive"):
-        return _variable_recursive_inverse(E, H,  Sigma_L, Sigma_R, block_size_list, mu1, mu2, processes)
+    if method == "direct":
+        return _direct_inverse(
+            E,
+            H,
+            Sigma_L,
+            Sigma_R,
+            H01,
+            mu1,
+            mu2,
+            block_size=block_size,
+            block_size_list=block_size_list,
+            occ_left=occ_left,
+            occ_right=occ_right,
+        )  
+    if method == "recursive":
+        return _recursive_inverse(E, H, H00, H01, Sigma_L, Sigma_R, mu1, mu2, block_size,
+                                  occ_left=occ_left,
+                                  occ_right=occ_right)
+    if method == "var_recursive":
+        return _variable_recursive_inverse(E, H,  Sigma_L, Sigma_R, block_size_list, mu1, mu2, processes,
+                                           occ_left=occ_left,
+                                           occ_right=occ_right)
     raise ValueError(f"Unknown method '{method}'. Use 'direct' or 'recursive'.")
-    
-def _direct_inverse(E, H, Sigma_L, Sigma_R, H01, muL=0, muR=0):
+
+def _direct_inverse(E, H, Sigma_L, Sigma_R, H01=None, muL=0, muR=0, *, block_size=None,
+                    block_size_list=None, occ_left=0.0, occ_right=0.0):
     """Direct inversion identical in spirit to the working notebook snippet.
 
     Returns:
@@ -73,39 +139,21 @@ def _direct_inverse(E, H, Sigma_L, Sigma_R, H01, muL=0, muR=0):
         Gamma_L, Gamma_R : full broadening matrices (dense np.ndarray)
     """
     # Convert inputs to dense arrays matching notebook behavior
-    if sp.issparse(H):
-        H = H.toarray()
-    if sp.issparse(H00):
-        H00 = H00.toarray()
-    if sp.issparse(H01):
-        H01 = H01.toarray()
-    n = H.shape[0]
+    H_dense = H.toarray() if sp.issparse(H) else np.asarray(H, dtype=complex)
+    Sigma_L_dense = Sigma_L.toarray() if sp.issparse(Sigma_L) else np.asarray(Sigma_L, dtype=complex)
+    Sigma_R_dense = Sigma_R.toarray() if sp.issparse(Sigma_R) else np.asarray(Sigma_R, dtype=complex)
 
-    # Surface Green's functions (Sancho-Rubio already adds small imaginary part)
-    
-    # G00_R = surface_greens_function(E - muR, H00, H01)
-    # if G00_L is None or G00_R is None:
-    #     raise ValueError("surface_greens_function returned None (non-converged).")
-    # G00_L = np.asarray(G00_L)
-    # G00_R = np.asarray(G00_R)
-    # if G00_L.ndim != 2:
-    #     G00_L = np.atleast_2d(G00_L)
-    # if G00_R.ndim != 2:
-    #     G00_R = np.atleast_2d(G00_R)
-
-    # # Self-energies blocks Σ = T^† G00 T with T = H01 (device↔lead principal layer coupling)
-    # Sigma_L = H01.conj().T @ G00_L @ H01
-    # Sigma_R = H01.conj().T @ G00_R @ H01
-    m = Sigma_L.shape[0]
+    n = H_dense.shape[0]
+    m = Sigma_L_dense.shape[0]
 
     # Embed into device corners
     Sigma_L_full = np.zeros((n, n), dtype=complex)
     Sigma_R_full = np.zeros((n, n), dtype=complex)
-    Sigma_L_full[:m, :m] = Sigma_L
-    Sigma_R_full[-m:, -m:] = Sigma_R
+    Sigma_L_full[:m, :m] = Sigma_L_dense
+    Sigma_R_full[-m:, -m:] = Sigma_R_dense
 
     # Build and solve for full G^R
-    A = (E + 1e-9j) * np.eye(n, dtype=complex) - (H + Sigma_L_full + Sigma_R_full)
+    A = (E + 1e-9j) * np.eye(n, dtype=complex) - (H_dense + Sigma_L_full + Sigma_R_full)
     G_R = np.linalg.solve(A, np.eye(n, dtype=complex))
 
     # Broadenings
@@ -113,18 +161,44 @@ def _direct_inverse(E, H, Sigma_L, Sigma_R, H01, muL=0, muR=0):
     Gamma_R = 1j * (Sigma_R_full - Sigma_R_full.conj().T)
 
     # Lesser (equilibrium two-terminal approximation)
-    f_L = fermi_dirac(E, muL)
-    f_R = fermi_dirac(E, muR)
-    Sigma_lesser = 1j * (Gamma_L * f_L + Gamma_R * f_R)
+    Sigma_lesser = 1j * (Gamma_L * occ_left + Gamma_R * occ_right)
     G_A = G_R.conj().T
     G_lesser = G_R @ Sigma_lesser @ G_A
 
-    G_R_diag = np.diag(G_R)
+    if block_size_list is not None:
+        block_sizes = np.asarray(block_size_list, dtype=int).astype(int)
+    else:
+        if block_size is None:
+            if H01 is not None:
+                block_size = H01.shape[0]
+            else:
+                block_size = m
+        if block_size <= 0:
+            raise ValueError("block_size must be positive for direct inversion.")
+        if n % block_size != 0:
+            raise ValueError("Hamiltonian dimension not divisible by block_size for direct inversion.")
+        block_sizes = np.full(n // block_size, int(block_size), dtype=int)
+
+    offsets = np.cumsum(np.concatenate(([0], block_sizes)))
+    if offsets[-1] != n:
+        raise ValueError("Sum of block sizes must match Hamiltonian dimension in direct inversion.")
+
+    G_lesser_offdiag_right = []
+    for idx in range(len(block_sizes) - 1):
+        s = offsets[idx]
+        e = offsets[idx + 1]
+        s_next = offsets[idx + 1]
+        e_next = offsets[idx + 2]
+        G_block = G_lesser[s_next:e_next, s:e]
+        G_lesser_offdiag_right.append(G_block)
+
     G_lesser_diag = np.diag(G_lesser)
-    return G_R, G_lesser_diag, Gamma_L, Gamma_R
+
+    return G_R, G_lesser_diag, G_lesser_offdiag_right, Gamma_L, Gamma_R
 
 
-def _recursive_inverse(E, H,  H00, H01, muL=0, muR=0, block_size=None, compute_lesser=True):
+def _recursive_inverse(E, H, H00, H01, Sigma_L, Sigma_R, muL=0, muR=0, block_size=None,
+                       compute_lesser=True, occ_left=0.0, occ_right=0.0):
     if sp.issparse(H):
         H = H.toarray()
     n = H.shape[0]
@@ -137,9 +211,8 @@ def _recursive_inverse(E, H,  H00, H01, muL=0, muR=0, block_size=None, compute_l
     dagger = lambda A: np.conjugate(A.T)
     G00_L = surface_greens_function(E, H00, H01)
     G00_R = surface_greens_function(E, H00, H01)
-    
-    Sigma_L = H01.conj().T @ G00_L @ H01
-    Sigma_R = H01.conj().T @ G00_R @ H01
+    Sigma_L = H01.conj().T @ G00_L @ H01 if Sigma_L is None else Sigma_L
+    Sigma_R = H01.conj().T @ G00_R @ H01 if Sigma_R is None else Sigma_R
     # Slice blocks
     H_ii = []
     H_ij = []
@@ -155,11 +228,10 @@ def _recursive_inverse(E, H,  H00, H01, muL=0, muR=0, block_size=None, compute_l
 
     Gamma_L = 1j * (Sigma_L - Sigma_L.conj().T)
     Gamma_R = 1j * (Sigma_R - Sigma_R.conj().T)
+    #print(Sigma_L[0], Sigma_R[-1])
+    Sigma_L_lesser = Gamma_L * occ_left 
+    Sigma_R_lesser = Gamma_R * occ_right 
 
-    f_L = fermi_dirac(E, muL)
-    f_R = fermi_dirac(E, muR)
-    Sigma_L_lesser = Gamma_L * f_L * 1j
-    Sigma_R_lesser = Gamma_R * f_R * 1j
     g_R = []
     g_lesser = []
 
@@ -221,10 +293,11 @@ def _recursive_inverse(E, H,  H00, H01, muL=0, muR=0, block_size=None, compute_l
 
     G_R_diag = np.concatenate([np.diag(block) for block in G_R])
     G_lesser_diag = np.concatenate([np.diag(block) for block in G_lesser])
-
+    #print('glesser', G_lesser_diag)
     return G_R_diag, G_lesser_diag, G_lesser_offdiag_right, Gamma_L, Gamma_R 
 
-def _variable_recursive_inverse(E, H, Sigma_L, Sigma_R, block_size_list, mu1, mu2, processes):
+def _variable_recursive_inverse(E, H, Sigma_L, Sigma_R, block_size_list, mu1, mu2, processes,
+                               occ_left=0.0, occ_right=0.0):
     if block_size_list is None:
         raise ValueError("block_size_list must be provided for method='var_recursive'.")
 
@@ -252,11 +325,9 @@ def _variable_recursive_inverse(E, H, Sigma_L, Sigma_R, block_size_list, mu1, mu
     Sigma_R = np.asarray(Sigma_R, dtype=complex)[-right_dim:, -right_dim:]
     Gamma_L = 1j * (Sigma_L - Sigma_L.conj().T)
     Gamma_R = 1j * (Sigma_R - Sigma_R.conj().T)
-
-    f_L = fermi_dirac(E, mu1)
-    f_R = fermi_dirac(E, mu2)
-    Sigma_L_lesser = Gamma_L * f_L * 1j
-    Sigma_R_lesser = Gamma_R * f_R * 1j
+    
+    Sigma_L_lesser = Gamma_L * occ_left 
+    Sigma_R_lesser = Gamma_R * occ_right
 
     # Build block tridiagonal representation of A = (E I - H - Sigma)
     diagonal_blocks: List[np.ndarray] = []
@@ -292,7 +363,7 @@ def _variable_recursive_inverse(E, H, Sigma_L, Sigma_R, block_size_list, mu1, mu
 
     full_inverse = result.full_inverse
     G_R_diag = np.concatenate([np.diag(block) for block in result.diagonal])
-
+    
     first_slice = slice(offsets[0], offsets[1])
     last_slice = slice(offsets[-2], offsets[-1]) if len(block_sizes) > 1 else first_slice
 

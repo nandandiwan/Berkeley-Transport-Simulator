@@ -28,7 +28,11 @@ def smart_inverse(A, sparse_threshold=0.1):
 
 
 def fermi_dirac(E,mu):
-    return 1 / (1 + np.exp(E - mu))
+    if E < mu:
+        return 1
+    else:
+        return 0
+    return 1 / (1 + np.exp((E - mu) / 0))
 
 def FD_half(x):
     v = x ** 4 + 50 + 33.6 * x * (1 - 0.68 * np.exp(-0.17 * (x + 1) ** 2))

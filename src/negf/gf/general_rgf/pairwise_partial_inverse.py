@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Iterable, List, Sequence, Tuple
+import multiprocessing as mp
 
 import numpy as np
 import scipy.sparse as sp
@@ -93,6 +94,11 @@ def _make_segment(
     inverse = np.linalg.inv(local_matrix)
     end = start + len(block_sizes) - 1
     return _Segment(start=start, end=end, block_sizes=block_sizes, offsets=offsets, inverse=inverse)
+
+
+def _segment_worker(payload: tuple[int, Sequence[ArrayLike | sp.spmatrix], Sequence[ArrayLike | sp.spmatrix], Sequence[ArrayLike | sp.spmatrix]]) -> _Segment:
+    start, diag_blocks, upper_blocks, lower_blocks = payload
+    return _make_segment(start, diag_blocks, upper_blocks, lower_blocks)
 
 
 def _make_partition(num_blocks: int, processes: int | None) -> List[Tuple[int, int]]:
@@ -205,11 +211,22 @@ def pairwise_partial_inverse(
 
     partition = _make_partition(num_blocks, processes)
     segments: List[_Segment] = []
-    for start, end in partition:
-        diag_slice = diagonal_blocks[start : end + 1]
-        upper_slice = upper_blocks[start:end]
-        lower_slice = lower_blocks[start:end]
-        segments.append(_make_segment(start, diag_slice, upper_slice, lower_slice))
+    if processes is not None and processes > 1:
+        ctx = mp.get_context("fork")
+        tasks = []
+        for start, end in partition:
+            diag_slice = diagonal_blocks[start : end + 1]
+            upper_slice = upper_blocks[start:end]
+            lower_slice = lower_blocks[start:end]
+            tasks.append((start, diag_slice, upper_slice, lower_slice))
+        with ctx.Pool(processes=processes) as pool:
+            segments = pool.map(_segment_worker, tasks)
+    else:
+        for start, end in partition:
+            diag_slice = diagonal_blocks[start : end + 1]
+            upper_slice = upper_blocks[start:end]
+            lower_slice = lower_blocks[start:end]
+            segments.append(_make_segment(start, diag_slice, upper_slice, lower_slice))
 
     while len(segments) > 1:
         next_level: List[_Segment] = []
