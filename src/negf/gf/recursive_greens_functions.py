@@ -8,12 +8,48 @@ import scipy.constants as spc
 from negf.self_energy.surface import surface_greens_function
 from negf.self_energy.greens_functions import surface_greens_function_nn
 from negf.utils.common import fermi_dirac, smart_inverse, FD_minus_half
+from negf.utils.block_partition import compute_block_sizes_block_tridiagonal
 import scipy.linalg as linalg
 from negf.gf.general_rgf.pairwise_partial_inverse import pairwise_partial_inverse
 
 def mat_left_div(mat_a, mat_b):
     ans, resid, rank, s = linalg.lstsq(mat_a, mat_b, lapack_driver='gelsy')
     return ans
+
+
+def _merge_blocks_for_edge(block_sizes: np.ndarray, target_dim: int, *, left: bool) -> np.ndarray:
+    """Merge contiguous blocks so the edge block matches the lead size."""
+
+    if target_dim <= 0:
+        raise ValueError("Lead block dimension must be positive.")
+
+    blocks = np.asarray(block_sizes, dtype=int)
+    if blocks.ndim != 1 or blocks.size == 0:
+        raise ValueError("block_sizes must be a 1-D array with at least one entry.")
+
+    if left:
+        total = 0
+        idx = 0
+        while idx < blocks.size and total < target_dim:
+            total += int(blocks[idx])
+            idx += 1
+        if total != target_dim:
+            raise ValueError("Unable to align block partition with left lead size.")
+        if idx >= blocks.size:
+            return np.array([target_dim], dtype=int)
+        return np.concatenate((np.array([target_dim], dtype=int), blocks[idx:]))
+
+    total = 0
+    idx = blocks.size
+    while idx > 0 and total < target_dim:
+        idx -= 1
+        total += int(blocks[idx])
+    if total != target_dim:
+        raise ValueError("Unable to align block partition with right lead size.")
+    if idx <= 0:
+        return np.array([target_dim], dtype=int)
+    return np.concatenate((blocks[:idx], np.array([target_dim], dtype=int)))
+
 
 def _recursive_gf(energy, mat_l_list, mat_d_list, mat_u_list, s_in=0, s_out=0, damp=0.000001j):
     for jj,item in enumerate(mat_d_list):
@@ -64,10 +100,17 @@ def gf_inverse(
     method: str = "recursive",
     processes=1,
     H00_right=None,
+    H01_right=None,
     occupation_mode: str = "fermi_dirac",
     occupation_prefactor: float | None = None,
     occupation_kbT: float | None = None,
     self_energy_damp: float = 1e-9,
+    s_l: np.ndarray | None = None,
+    s_r: np.ndarray | None = None,
+    s_z: np.ndarray | None = None,
+    s_l_right: np.ndarray | None = None,
+    s_r_right: np.ndarray | None = None,
+    s_z_right: np.ndarray | None = None,
 ):
     
     def _occupation_factor(energy, mu, mode, prefactor, kbT):
@@ -82,10 +125,68 @@ def gf_inverse(
 
     if H00_right is None:
         H00_right = H00
-    
+    if H01_right is None:
+        H01_right = H01
+
     damp_complex = 1j * abs(float(self_energy_damp)) if self_energy_damp is not None else 1e-7j
 
-    Sigma_L_raw = surface_greens_function_nn(E - mu1, H01, H00, H01.conj().T, damp=damp_complex)
+    if H01 is None:
+        raise ValueError("H01 must be provided to compute lead self-energies.")
+
+    block_dim = H01.shape[0]
+    s_l_arr = None if s_l is None else np.asarray(s_l, dtype=np.complex128)
+    s_r_arr = None if s_r is None else np.asarray(s_r, dtype=np.complex128)
+
+    if s_l_arr is None and s_r_arr is not None:
+        s_l_arr = s_r_arr.conj().T
+    if s_r_arr is None and s_l_arr is not None:
+        s_r_arr = s_l_arr.conj().T
+
+    s_l_right_arr = (
+        np.asarray(s_l_right, dtype=np.complex128)
+        if s_l_right is not None
+        else (s_r_arr.conj().T if s_r_arr is not None else None)
+    )
+    s_r_right_arr = (
+        np.asarray(s_r_right, dtype=np.complex128)
+        if s_r_right is not None
+        else (s_l_arr.conj().T if s_l_arr is not None else None)
+    )
+
+    s_z_full = None if s_z is None else np.asarray(s_z, dtype=np.complex128)
+    s_z_right_full = (
+        np.asarray(s_z_right, dtype=np.complex128)
+        if s_z_right is not None
+        else (s_z_full.copy() if s_z_full is not None else None)
+    )
+
+    s0_left = None
+    s0_right = None
+    if s_z_full is not None:
+        if s_z_full.shape[0] == block_dim:
+            s0_left = s_z_full
+        elif s_z_full.shape[0] == H.shape[0]:
+            s0_left = s_z_full[:block_dim, :block_dim]
+        else:
+            raise ValueError("s_z must be either block_dim x block_dim or match H dimensions")
+    if s_z_right_full is not None:
+        if s_z_right_full.shape[0] == block_dim:
+            s0_right = s_z_right_full
+        elif s_z_right_full.shape[0] == H.shape[0]:
+            s0_right = s_z_right_full[-block_dim:, -block_dim:]
+        else:
+            raise ValueError("s_z_right must be either block_dim x block_dim or match H dimensions")
+
+    Sigma_L_raw = surface_greens_function_nn(
+        E - mu1,
+        H01,
+        H00,
+        H01.conj().T,
+        damp=damp_complex,
+        s_l=s_r_arr,
+        s_0=s0_left,
+        s_r=s_l_arr,
+    )
     
     if isinstance(Sigma_L_raw, tuple):
         # surface_greens_function_nn returns (sgf_r, sgf_l); select left component
@@ -93,7 +194,16 @@ def gf_inverse(
     else:
         Sigma_L = Sigma_L_raw
     
-    Sigma_R_raw = surface_greens_function_nn(E - mu2, H01, H00_right, H01.conj().T, damp=damp_complex)
+    Sigma_R_raw = surface_greens_function_nn(
+        E - mu2,
+        H01_right,
+        H00_right,
+        H01_right.conj().T,
+        damp=damp_complex,
+        s_l=s_r_right_arr,
+        s_0=s0_right,
+        s_r=s_l_right_arr,
+    )
    
     if isinstance(Sigma_R_raw, tuple):
         # First tuple entry corresponds to the right-lead self-energy
@@ -105,6 +215,8 @@ def gf_inverse(
     occ_right = _occupation_factor(E, mu2, occupation_mode, occupation_prefactor, occupation_kbT)
 
     
+    overlap_full = s_z_full if (s_z_full is not None and s_z_full.shape == H.shape) else None
+
     if method == "direct":
         return _direct_inverse(
             E,
@@ -118,19 +230,53 @@ def gf_inverse(
             block_size_list=block_size_list,
             occ_left=occ_left,
             occ_right=occ_right,
+            overlap_matrix=overlap_full,
         )  
     if method == "recursive":
         return _recursive_inverse(E, H, H00, H01, Sigma_L, Sigma_R, mu1, mu2, block_size,
                                   occ_left=occ_left,
                                   occ_right=occ_right)
     if method == "var_recursive":
-        return _variable_recursive_inverse(E, H,  Sigma_L, Sigma_R, block_size_list, mu1, mu2, processes,
-                                           occ_left=occ_left,
-                                           occ_right=occ_right)
-    raise ValueError(f"Unknown method '{method}'. Use 'direct' or 'recursive'.")
+        if block_size_list is None:
+            try:
+                block_sizes_var = compute_block_sizes_block_tridiagonal(H)
+            except Exception as exc:
+                raise ValueError(
+                    "Unable to infer block_size_list automatically for method='var_recursive'."
+                ) from exc
+        else:
+            block_sizes_var = np.asarray(block_size_list, dtype=int)
+
+        block_sizes_var = np.asarray(block_sizes_var, dtype=int)
+        if block_sizes_var.size == 0:
+            raise ValueError("block_size_list must contain at least one block.")
+
+        try:
+            block_sizes_var = _merge_blocks_for_edge(block_sizes_var, Sigma_L.shape[0], left=True)
+            block_sizes_var = _merge_blocks_for_edge(block_sizes_var, Sigma_R.shape[0], left=False)
+        except ValueError as exc:
+            raise ValueError(
+                "Automatic block partition could not accommodate lead principal-layer dimensions; "
+                "provide block_size_list explicitly."
+            ) from exc
+
+        return _variable_recursive_inverse(
+            E,
+            H,
+            Sigma_L,
+            Sigma_R,
+            block_sizes_var,
+            mu1,
+            mu2,
+            processes,
+            occ_left=occ_left,
+            occ_right=occ_right,
+        )
+    raise ValueError(f"Unknown method '{method}'. Use 'direct', 'recursive', or 'var_recursive'.")
 
 def _direct_inverse(E, H, Sigma_L, Sigma_R, H01=None, muL=0, muR=0, *, block_size=None,
-                    block_size_list=None, occ_left=0.0, occ_right=0.0):
+                    block_size_list=None, occ_left=0.0, occ_right=0.0,
+                    overlap_matrix: np.ndarray | None = None):
     """Direct inversion identical in spirit to the working notebook snippet.
 
     Returns:
@@ -152,8 +298,15 @@ def _direct_inverse(E, H, Sigma_L, Sigma_R, H01=None, muL=0, muR=0, *, block_siz
     Sigma_L_full[:m, :m] = Sigma_L_dense
     Sigma_R_full[-m:, -m:] = Sigma_R_dense
 
+    if overlap_matrix is None:
+        S_dense = np.eye(n, dtype=complex)
+    else:
+        S_dense = overlap_matrix if isinstance(overlap_matrix, np.ndarray) else np.asarray(overlap_matrix, dtype=complex)
+        if S_dense.shape != (n, n):
+            raise ValueError("overlap_matrix must match Hamiltonian dimensions in direct inversion.")
+
     # Build and solve for full G^R
-    A = (E + 1e-9j) * np.eye(n, dtype=complex) - (H_dense + Sigma_L_full + Sigma_R_full)
+    A = (E + 1e-9j) * S_dense - (H_dense + Sigma_L_full + Sigma_R_full)
     G_R = np.linalg.solve(A, np.eye(n, dtype=complex))
 
     # Broadenings
@@ -175,13 +328,13 @@ def _direct_inverse(E, H, Sigma_L, Sigma_R, H01=None, muL=0, muR=0, *, block_siz
                 block_size = m
         if block_size <= 0:
             raise ValueError("block_size must be positive for direct inversion.")
-        if n % block_size != 0:
-            raise ValueError("Hamiltonian dimension not divisible by block_size for direct inversion.")
+        # if n % block_size != 0:
+        #     raise ValueError("Hamiltonian dimension not divisible by block_size for direct inversion.")
         block_sizes = np.full(n // block_size, int(block_size), dtype=int)
 
     offsets = np.cumsum(np.concatenate(([0], block_sizes)))
-    if offsets[-1] != n:
-        raise ValueError("Sum of block sizes must match Hamiltonian dimension in direct inversion.")
+    # if offsets[-1] != n:
+    #     raise ValueError("Sum of block sizes must match Hamiltonian dimension in direct inversion.")
 
     G_lesser_offdiag_right = []
     for idx in range(len(block_sizes) - 1):

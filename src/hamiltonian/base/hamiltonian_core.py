@@ -306,6 +306,9 @@ class Hamiltonian(BasisTB):
         self.h_matrix_bc_factor = np.ones((self.basis_size, self.basis_size), dtype=complex)
         self.k_vector = None
 
+    def _compute_h_matrix_bc_factor(self):
+        return
+
     def _compute_h_matrix_bc_add(self, overlap=False, split_the_leads: bool = False, transport_dir=None):
      
         if self.ct is not None:
