@@ -7,6 +7,13 @@ import multiprocessing as mp
 import numpy as np
 import scipy.sparse as sp
 
+try:  # Optional C++ acceleration via cppimport + pybind11
+    import cppimport  # type: ignore
+
+    _cpp_pairwise = cppimport.imp("negf.gf.general_rgf.pairwise_partial_inverse_ext")
+except Exception:  # pragma: no cover - fallback to Python implementation
+    _cpp_pairwise = None
+
 
 ArrayLike = np.ndarray
 
@@ -209,6 +216,25 @@ def pairwise_partial_inverse(
     if len(upper_blocks) != max(0, num_blocks - 1) or len(lower_blocks) != max(0, num_blocks - 1):
         raise ValueError("upper_blocks and lower_blocks must have length len(diagonal_blocks) - 1.")
 
+    # Prefer C++ dense inversion if available; fall back to Python merge
+    if _cpp_pairwise is not None:
+        diag_cpp = [_to_ndarray(block) for block in diagonal_blocks]
+        upper_cpp = [_to_ndarray(block) for block in upper_blocks]
+        lower_cpp = [_to_ndarray(block) for block in lower_blocks]
+        diag_out, upper_out, lower_out, block_sizes, full_inv = _cpp_pairwise.pairwise_inverse_cpp(
+            diag_cpp,
+            upper_cpp,
+            lower_cpp,
+            return_full,
+        )
+        return PairwiseInverseResult(
+            diagonal=list(diag_out),
+            upper=list(upper_out),
+            lower=list(lower_out),
+            block_sizes=tuple(block_sizes),
+            full_inverse=None if full_inv is None else np.asarray(full_inv),
+        )
+    print('using python')
     partition = _make_partition(num_blocks, processes)
     segments: List[_Segment] = []
     if processes is not None and processes > 1:

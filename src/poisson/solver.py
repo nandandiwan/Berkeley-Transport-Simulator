@@ -75,6 +75,9 @@ class NonlinearPoissonSolver:
 		eps0: float = VACUUM_PERMITTIVITY,
 		charge_callback: Optional[ChargeCallback] = None,
 		background_charge: Optional[BackgroundCharge] = None,
+		pin_left_value: Optional[float] = None,
+		pin_right_value: Optional[float] = None,
+		boundary_tol: float = 1e-12,
 		snes_options_prefix: str = "poisson_",
 	) -> None:
 		self.mesh = domain
@@ -92,6 +95,25 @@ class NonlinearPoissonSolver:
 		self._background_charge = background_charge
 		self._background_values = self._evaluate_background(background_charge)
 
+		dirichlet_specs = list(dirichlet_bcs)
+		if pin_left_value is not None or pin_right_value is not None:
+			x_min = float(np.min(domain.geometry.x[:, 0]))
+			x_max = float(np.max(domain.geometry.x[:, 0]))
+			if pin_left_value is not None:
+				dirichlet_specs.append(
+					DirichletBCSpec(
+						value=float(pin_left_value),
+						marker=lambda x, x_min=x_min, tol=boundary_tol: np.isclose(x[0], x_min, atol=tol),
+					)
+				)
+			if pin_right_value is not None:
+				dirichlet_specs.append(
+					DirichletBCSpec(
+						value=float(pin_right_value),
+						marker=lambda x, x_max=x_max, tol=boundary_tol: np.isclose(x[0], x_max, atol=tol),
+					)
+				)
+
 		u = ufl.TrialFunction(self.V)
 		v = ufl.TestFunction(self.V)
 		self._a_form = fem.form(ufl.inner(self.eps_r * ufl.grad(u), ufl.grad(v)) * ufl.dx)
@@ -101,12 +123,14 @@ class NonlinearPoissonSolver:
 		self.K.assemble()
 		self.R = self.K.createVecRight()
 		self.X = self.K.createVecRight()
-		self.b_vec = create_vector(self._b_form)
+		#self.b_vec = create_vector(self._b_form)
+		self.b_vec = assemble_vector(self._b_form)
+		self.b_vec.assemble()
 
 		self._bc_functions: list[fem.Function] = []
 		self._dirichlet_sets: list[np.ndarray] = []
 		self.bcs: list[fem.DirichletBC] = []
-		for spec in dirichlet_bcs:
+		for spec in dirichlet_specs:
 			bc, backing, dofs = spec.instantiate(self.V)
 			self.bcs.append(bc)
 			self._bc_functions.append(backing)

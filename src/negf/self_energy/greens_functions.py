@@ -144,9 +144,10 @@ def iterate_gf(E, h_0, h_l, h_r, se, num_iter):
     return se
 
 
-def surface_greens_function_nn(E, h_l, h_0, h_r, iterate=False, damp=1e-5j):
+def surface_greens_function_nn(E, h_l, h_0, h_r, iterate=False, damp=1e-5j,
+                               s_l=None, s_0=None, s_r=None):
     """Computes surface self-energies using the eigenvalue decomposition.
-    This definition is copied verbatim from the original reference implementation.
+    Supports optional overlap matrices (s_l, s_0, s_r); falls back to identity/zeros if omitted.
 
     Parameters
     ----------
@@ -179,41 +180,73 @@ def surface_greens_function_nn(E, h_l, h_0, h_r, iterate=False, damp=1e-5j):
 
     if isinstance(h_0, list):
         num_blocks = len(h_0)
-        for j in range(len(h_0)):
-            shapes_d.append(h_0[j].shape[0])
-            shapes_ld.append(h_l[j].shape)
-            shapes_ud.append(h_r[j].shape)
-        matrix_size = np.sum(shapes_d)
+        h0_list = h_0
+        hl_list = h_l
+        hr_list = h_r
     else:
         num_blocks = 1
-        shapes_d.append(h_0.shape[0])
-        shapes_ld.append(h_l.shape)
-        shapes_ud.append(h_r.shape)
-        matrix_size = h_0.shape[0]
-        h_l = [h_l]
-        h_0 = [h_0]
-        h_r = [h_r]
+        h0_list = [h_0]
+        hl_list = [h_l]
+        hr_list = [h_r]
+
+    # Normalize overlaps; default: s_0 = I, s_l/s_r = 0
+    if s_0 is None:
+        s0_list = [np.identity(x.shape[0], dtype=complex) for x in h0_list]
+    elif isinstance(s_0, list):
+        s0_list = s_0
+    else:
+        s0_list = [s_0]
+
+    if s_l is None:
+        sl_list = [np.zeros_like(hl_list[0], dtype=complex) for _ in range(num_blocks)]
+    elif isinstance(s_l, list):
+        sl_list = s_l
+    else:
+        sl_list = [s_l]
+
+    if s_r is None:
+        sr_list = [np.zeros_like(hr_list[0], dtype=complex) for _ in range(num_blocks)]
+    elif isinstance(s_r, list):
+        sr_list = s_r
+    else:
+        sr_list = [s_r]
+
+    for j in range(num_blocks):
+        shapes_d.append(h0_list[j].shape[0])
+        shapes_ld.append(hl_list[j].shape)
+        shapes_ud.append(hr_list[j].shape)
+    matrix_size = np.sum(shapes_d)
 
     full_matrix_size = 2 * matrix_size
     identity = np.identity(matrix_size)
     main_matrix = np.zeros((full_matrix_size, full_matrix_size), dtype=complex)
     overlap_matrix = np.zeros((full_matrix_size, full_matrix_size), dtype=complex)
     main_matrix[0:matrix_size, matrix_size:2 * matrix_size] = identity
-    overlap_matrix[0:matrix_size, 0:matrix_size] = identity
-    main_matrix[matrix_size:matrix_size+h_l[-1].shape[0], matrix_size-h_l[-1].shape[1]:matrix_size] = -h_l[-1]
-    overlap_matrix[2*matrix_size-h_r[-1].shape[0]:2*matrix_size, matrix_size:matrix_size+h_r[-1].shape[1]] = h_r[-1]
+    # Diagonal overlaps
+    overlap_matrix[0:matrix_size, 0:matrix_size] = 0.0
+    offset_tmp = 0
+    for j in range(num_blocks):
+        block_sz = h0_list[j].shape[0]
+        overlap_matrix[offset_tmp:offset_tmp+block_sz, offset_tmp:offset_tmp+block_sz] = s0_list[j]
+        offset_tmp += block_sz
+
+    main_matrix[matrix_size:matrix_size+hl_list[-1].shape[0], matrix_size-hl_list[-1].shape[1]:matrix_size] = -hl_list[-1]
+    overlap_matrix[2*matrix_size-sr_list[-1].shape[0]:2*matrix_size, matrix_size:matrix_size+sr_list[-1].shape[1]] = sr_list[-1]
 
     offset = matrix_size
 
     for j in range(num_blocks):
 
-        main_matrix[offset:offset+h_0[j].shape[0], offset:offset+h_0[j].shape[0]] = -h_0[j]
+        main_matrix[offset:offset+h0_list[j].shape[0], offset:offset+h0_list[j].shape[0]] = -h0_list[j]
+        overlap_matrix[offset:offset+h0_list[j].shape[0], offset:offset+h0_list[j].shape[0]] = s0_list[j]
 
         if j > 0:
-            main_matrix[offset:offset + h_l[j - 1].shape[0], offset - h_l[j - 1].shape[1]:offset] = -h_l[j - 1]
-            main_matrix[offset - h_l[j - 1].shape[1]:offset, offset:offset + h_l[j - 1].shape[0]] = -h_r[j - 1]
+            main_matrix[offset:offset + hl_list[j - 1].shape[0], offset - hl_list[j - 1].shape[1]:offset] = -hl_list[j - 1]
+            main_matrix[offset - hl_list[j - 1].shape[1]:offset, offset:offset + hl_list[j - 1].shape[0]] = -hr_list[j - 1]
 
-        offset += h_0[j].shape[0]
+            overlap_matrix[offset:offset + sl_list[j - 1].shape[0], offset - sl_list[j - 1].shape[1]:offset] = sl_list[j - 1]
+            overlap_matrix[offset - sl_list[j - 1].shape[1]:offset, offset:offset + sl_list[j - 1].shape[0]] = sr_list[j - 1]
+    offset += h0_list[j].shape[0]
 
     main_matrix[matrix_size:2*matrix_size, matrix_size:2*matrix_size] = \
         (E + damp) * np.identity(matrix_size) + main_matrix[matrix_size:2*matrix_size, matrix_size:2*matrix_size]
@@ -248,8 +281,9 @@ def surface_greens_function_nn(E, h_l, h_0, h_r, iterate=False, damp=1e-5j):
         sgf_l = iterate_gf(E, h0, hl, hr, sgf_l, 2)
         sgf_r = iterate_gf(E, h0, hr, hl, sgf_r, 2)
 
-    s01, s02 = h_0[0].shape
-    s11, s12 = h_0[-1].shape
+    # Trim to the size of the terminal blocks
+    s01, s02 = h0_list[0].shape
+    s11, s12 = h0_list[-1].shape
 
     sgf_l = sgf_l[-s11:, -s12:]
     sgf_r = sgf_r[:s01, :s02]
