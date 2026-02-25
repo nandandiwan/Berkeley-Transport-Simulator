@@ -384,9 +384,12 @@ def _recursive_inverse(
     overlap_matrix: np.ndarray | None = None,
     eta: float = 1e-6,
     return_trace: bool = False,
+    return_diag: bool = True,
+    return_gamma: bool = True,
+    return_g_trans: bool = False,
 ):
-    # Attempt C++ accelerated path when available
-    if _cpp_recursive is not None:
+    # Attempt C++ accelerated path when available (cannot return g_trans there)
+    if _cpp_recursive is not None and not return_g_trans:
         H_dense = H.toarray() if sp.issparse(H) else np.asarray(H, dtype=complex)
         Sigma_L_arr = np.asarray(Sigma_L, dtype=complex)
         Sigma_R_arr = np.asarray(Sigma_R, dtype=complex)
@@ -411,7 +414,6 @@ def _recursive_inverse(
             return G_R_diag, G_lesser_diag, G_lesser_offdiag_right, Gamma_L, Gamma_R, trace_gs
         return G_R_diag, G_lesser_diag, G_lesser_offdiag_right, Gamma_L, Gamma_R
 
-    print("python")
     if sp.issparse(H):
         H = H.toarray()
     n = H.shape[0]
@@ -445,13 +447,16 @@ def _recursive_inverse(
             S_cpl = S_full[sl, sr].copy()
             A_ij.append(E_eta * S_cpl - H_cpl)
 
-    Gamma_L = 1j * (Sigma_L - Sigma_L.conj().T)
-    Gamma_R = 1j * (Sigma_R - Sigma_R.conj().T)
-    Sigma_L_lesser = Gamma_L * occ_left
-    Sigma_R_lesser = Gamma_R * occ_right
+    Gamma_L = 1j * (Sigma_L - Sigma_L.conj().T) if return_gamma else None
+    Gamma_R = 1j * (Sigma_R - Sigma_R.conj().T) if return_gamma else None
+    if compute_lesser:
+        if Gamma_L is None or Gamma_R is None:
+            raise ValueError("compute_lesser=True requires return_gamma=True")
+        Sigma_L_lesser = Gamma_L * occ_left
+        Sigma_R_lesser = Gamma_R * occ_right
 
     g_R = []
-    g_lesser = []
+    g_lesser = [] if compute_lesser else None
 
     # Forward sweep
     A00_eff = A_ii[0] - Sigma_L
@@ -460,6 +465,7 @@ def _recursive_inverse(
 
     if compute_lesser:
         g0_lesser = g0_R @ Sigma_L_lesser @ dagger(g0_R)
+        assert g_lesser is not None
         g_lesser.append(g0_lesser)
 
     for i in range(1, n_blocks):
@@ -468,13 +474,18 @@ def _recursive_inverse(
         g_i_R = smart_inverse(A_ii[i] - sigma_recursive_R)
         g_R.append(g_i_R)
         if compute_lesser:
+            assert g_lesser is not None
             sigma_recursive_lesser = A_i_im1 @ g_lesser[i - 1] @ A_ij[i - 1]
             g_i_lesser = g_R[i] @ sigma_recursive_lesser @ dagger(g_R[i])
             g_lesser.append(g_i_lesser)
 
     G_R = [None] * n_blocks
-    G_lesser = [None] * n_blocks
-    G_lesser_offdiag_right = [None] * (n_blocks - 1)
+    G_lesser = [None] * n_blocks if compute_lesser else None
+    G_lesser_offdiag_right = [None] * (n_blocks - 1) if compute_lesser else None
+
+    # Optional end-to-end retarded Green's function block (leftmost -> rightmost)
+    # This is useful for transmission: T = Tr[Γ_L G_{1N} Γ_R G_{1N}^†]
+    G_to_last = None
 
     # Backward sweep
     A_N_Nm1 = dagger(A_ij[-1])
@@ -482,10 +493,14 @@ def _recursive_inverse(
     GN_R = smart_inverse(A_ii[-1] - Sigma_R - sigma_eff_R)
     G_R[-1] = GN_R
 
+    if return_g_trans:
+        G_to_last = GN_R
+
     if compute_lesser:
         sigma_eff_lesser = A_N_Nm1 @ g_lesser[-2] @ A_ij[-1]
         total_sigma_lesser = Sigma_R_lesser + sigma_eff_lesser
         GN_lesser = G_R[-1] @ total_sigma_lesser @ dagger(G_R[-1])
+        assert G_lesser is not None
         G_lesser[-1] = GN_lesser
 
     for i in range(n_blocks - 2, -1, -1):
@@ -493,8 +508,18 @@ def _recursive_inverse(
         A_ip1_i = dagger(A_i_ip1)
         propagator = g_R[i] @ A_i_ip1 @ G_R[i + 1] @ A_ip1_i
         G_R[i] = g_R[i] + propagator @ g_R[i]
+
+        if return_g_trans:
+            assert G_to_last is not None
+            # Off-diagonal block recurrence for a block-tridiagonal inverse.
+            # For a 2x2 block system, G_{12} = -G_{11} A_{12} G_{22}.
+            # Extending along the chain gives the end-to-end block by repeated application.
+            G_to_last = -G_R[i] @ A_i_ip1 @ G_to_last
         if compute_lesser:
+            assert G_lesser is not None
+            assert G_lesser_offdiag_right is not None
             g_R_dag = dagger(g_R[i])
+            assert g_lesser is not None
             term1 = g_lesser[i]
             term2 = propagator @ g_lesser[i]
             term3 = g_lesser[i] @ dagger(propagator)
@@ -506,8 +531,14 @@ def _recursive_inverse(
             off_term_L = G_lesser[i] @ A_i_ip1 @ G_ip1_A
             G_lesser_offdiag_right[i] = off_term_R + off_term_L
 
-    G_R_diag = np.concatenate([np.diag(block) for block in G_R])
-    G_lesser_diag = np.concatenate([np.diag(block) for block in G_lesser])
+    G_R_diag = None
+    if return_diag:
+        G_R_diag = np.concatenate([np.diag(block) for block in G_R])
+
+    G_lesser_diag = None
+    if compute_lesser:
+        assert G_lesser is not None
+        G_lesser_diag = np.concatenate([np.diag(block) for block in G_lesser])
 
     trace_gs = None
     if return_trace:
@@ -524,8 +555,14 @@ def _recursive_inverse(
                 trace_val += np.trace(G_R[idx + 1] @ (S_full[s_next:e_next, s:e]))
         trace_gs = trace_val
 
+    g_trans = G_to_last if return_g_trans else None
+
     if return_trace:
+        if return_g_trans:
+            return G_R_diag, G_lesser_diag, G_lesser_offdiag_right, Gamma_L, Gamma_R, trace_gs, g_trans
         return G_R_diag, G_lesser_diag, G_lesser_offdiag_right, Gamma_L, Gamma_R, trace_gs
+    if return_g_trans:
+        return G_R_diag, G_lesser_diag, G_lesser_offdiag_right, Gamma_L, Gamma_R, g_trans
     return G_R_diag, G_lesser_diag, G_lesser_offdiag_right, Gamma_L, Gamma_R 
 
 def _variable_recursive_inverse(
@@ -538,6 +575,9 @@ def _variable_recursive_inverse(
     *,
     overlap_matrix: np.ndarray | None = None,
     return_full_inverse: bool = False,
+    return_blocks: bool = True,
+    return_diag: bool = True,
+    return_gamma: bool = True,
     eta: float = 1e-6,
 ):
     if block_size_list is None:
@@ -572,8 +612,8 @@ def _variable_recursive_inverse(
     right_dim = int(block_sizes[-1])
     Sigma_L = np.asarray(Sigma_L, dtype=complex)[:left_dim, :left_dim]
     Sigma_R = np.asarray(Sigma_R, dtype=complex)[-right_dim:, -right_dim:]
-    Gamma_L = 1j * (Sigma_L - Sigma_L.conj().T)
-    Gamma_R = 1j * (Sigma_R - Sigma_R.conj().T)
+    Gamma_L = 1j * (Sigma_L - Sigma_L.conj().T) if return_gamma else None
+    Gamma_R = 1j * (Sigma_R - Sigma_R.conj().T) if return_gamma else None
 
     # Build block tridiagonal representation of A = (E I - H - Sigma)
     diagonal_blocks: List[np.ndarray] = []
@@ -620,7 +660,10 @@ def _variable_recursive_inverse(
         return_full=return_full_inverse,
     )
 
-    G_R_diag = np.concatenate([np.diag(block) for block in result.diagonal])
+    G_R_diag = None
+    if return_diag:
+        G_R_diag = np.concatenate([np.diag(block) for block in result.diagonal])
+
     full_inverse = result.full_inverse if return_full_inverse else None
 
     trace_gs = None
@@ -652,4 +695,6 @@ def _variable_recursive_inverse(
                 trace_val += np.trace(lower @ S_upper)
             trace_gs = trace_val
 
-    return G_R_diag, result.diagonal, full_inverse, Gamma_L, Gamma_R, trace_gs
+    diag_blocks_out = result.diagonal if return_blocks else None
+    full_inverse_out = full_inverse if return_full_inverse else None
+    return G_R_diag, diag_blocks_out, full_inverse_out, Gamma_L, Gamma_R, trace_gs
