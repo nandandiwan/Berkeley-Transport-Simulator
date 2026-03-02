@@ -9,6 +9,7 @@ try:  # Optional C++ acceleration for recursive inverse
 
     _cpp_recursive = cppimport.imp("negf.gf.recursive_inverse_ext")
 except Exception:  # pragma: no cover - fallback to Python implementation
+    print("no cpp")
     _cpp_recursive = None
 import scipy.constants as spc
 #from negf.self_energy.surface import surface_greens_function
