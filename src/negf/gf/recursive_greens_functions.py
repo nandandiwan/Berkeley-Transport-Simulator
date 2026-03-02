@@ -401,6 +401,8 @@ def _recursive_inverse(
             Sigma_L_arr,
             Sigma_R_arr,
             overlap_obj if overlap_obj is not None else None,
+            float(np.real(occ_left)),
+            float(np.real(occ_right)),
             float(eta),
             compute_lesser,
             return_trace,

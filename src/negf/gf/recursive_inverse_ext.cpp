@@ -38,6 +38,8 @@ static py::tuple recursive_inverse_cpp(
     const Matrix &Sigma_L_in,
     const Matrix &Sigma_R_in,
     const py::object &overlap_obj,
+    double occ_left,
+    double occ_right,
     double eta,
     bool compute_lesser,
     bool return_trace
@@ -101,7 +103,7 @@ static py::tuple recursive_inverse_cpp(
     Matrix A00_eff = A_ii[0];
     g_R[0] = A00_eff.fullPivLu().inverse();
     if (compute_lesser) {
-        Matrix Sigma_L_lesser = Matrix::Zero(block_size, block_size); // occupancies assumed zero here
+        Matrix Sigma_L_lesser = Gamma_L * occ_left;
         g_lesser[0] = g_R[0] * Sigma_L_lesser * dagger(g_R[0]);
     }
 
@@ -120,14 +122,24 @@ static py::tuple recursive_inverse_cpp(
     std::vector<Matrix> G_lesser(n_blocks);
     std::vector<Matrix> G_lesser_offdiag_right(n_blocks > 1 ? n_blocks - 1 : 0);
 
-    Matrix A_N_Nm1 = dagger(A_ij.back());
-    Matrix sigma_eff_R = A_N_Nm1 * g_R[n_blocks - 2] * A_ij.back();
-    G_R[n_blocks - 1] = (A_ii.back() - sigma_eff_R).fullPivLu().inverse();
-    if (compute_lesser) {
-        Matrix sigma_eff_l = A_N_Nm1 * g_lesser[n_blocks - 2] * A_ij.back();
-        Matrix Sigma_R_lesser = Matrix::Zero(block_size, block_size);
-        Matrix total_sigma_l = Sigma_R_lesser + sigma_eff_l;
-        G_lesser[n_blocks - 1] = G_R[n_blocks - 1] * total_sigma_l * dagger(G_R[n_blocks - 1]);
+    if (n_blocks == 1) {
+        G_R[0] = g_R[0];
+        if (compute_lesser) {
+            Matrix Sigma_L_lesser = Gamma_L * occ_left;
+            Matrix Sigma_R_lesser = Gamma_R * occ_right;
+            Matrix total_sigma_l = Sigma_L_lesser + Sigma_R_lesser;
+            G_lesser[0] = G_R[0] * total_sigma_l * dagger(G_R[0]);
+        }
+    } else {
+        Matrix A_N_Nm1 = dagger(A_ij.back());
+        Matrix sigma_eff_R = A_N_Nm1 * g_R[n_blocks - 2] * A_ij.back();
+        G_R[n_blocks - 1] = (A_ii.back() - sigma_eff_R).fullPivLu().inverse();
+        if (compute_lesser) {
+            Matrix sigma_eff_l = A_N_Nm1 * g_lesser[n_blocks - 2] * A_ij.back();
+            Matrix Sigma_R_lesser = Gamma_R * occ_right;
+            Matrix total_sigma_l = Sigma_R_lesser + sigma_eff_l;
+            G_lesser[n_blocks - 1] = G_R[n_blocks - 1] * total_sigma_l * dagger(G_R[n_blocks - 1]);
+        }
     }
 
     for (int i = n_blocks - 2; i >= 0; --i) {
@@ -197,6 +209,8 @@ PYBIND11_MODULE(recursive_inverse_ext, m) {
           py::arg("Sigma_L"),
           py::arg("Sigma_R"),
           py::arg("overlap_matrix"),
+            py::arg("occ_left") = 0.0,
+            py::arg("occ_right") = 0.0,
           py::arg("eta") = 1e-6,
           py::arg("compute_lesser") = true,
           py::arg("return_trace") = false);
