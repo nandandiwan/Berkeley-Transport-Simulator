@@ -1,14 +1,40 @@
 import copy
+import os
+import site
 from typing import List
 
 import numpy as np
 import scipy.sparse as sp
 
-try:  # Optional C++ acceleration for recursive inverse
-    import cppimport  # type: ignore
 
-    _cpp_recursive = cppimport.imp("negf.gf.recursive_inverse_ext")
-except Exception:  # pragma: no cover - fallback to Python implementation
+def _has_eigen_headers() -> bool:
+    eigen_env = os.environ.get("EIGEN_INCLUDE")
+    if eigen_env and os.path.isfile(os.path.join(eigen_env, "Eigen", "Core")):
+        return True
+    conda_prefix = os.environ.get("CONDA_PREFIX", "")
+    for candidate in (
+        "/usr/include/eigen3/Eigen/Core",
+        os.path.expanduser("~/.local/eigen3/usr/include/eigen3/Eigen/Core"),
+        os.path.expanduser("~/.local/eigen3_pkg/usr/include/eigen3/Eigen/Core"),
+        os.path.join(conda_prefix, "include", "eigen3", "Eigen", "Core"),
+        os.path.join(conda_prefix, "include", "Eigen", "Core"),
+    ):
+        if candidate and os.path.isfile(candidate):
+            return True
+    for base in site.getsitepackages():
+        candidate = os.path.join(base, "eigen", "include", "eigen3", "Eigen", "Core")
+        if os.path.isfile(candidate):
+            return True
+    return False
+
+try:  # Optional C++ acceleration for recursive inverse
+    if _has_eigen_headers():
+        import cppimport  # type: ignore
+
+        _cpp_recursive = cppimport.imp("negf.gf.recursive_inverse_ext")
+    else:
+        _cpp_recursive = None
+except BaseException:  # pragma: no cover - fallback to Python implementation
     print("no cpp")
     _cpp_recursive = None
 import scipy.constants as spc

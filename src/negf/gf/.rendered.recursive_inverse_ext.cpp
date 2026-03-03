@@ -1,30 +1,5 @@
 // cppimport
-<%
-import os, site, pybind11
-os.environ.setdefault('CC', '/usr/bin/gcc')
-os.environ.setdefault('CXX', '/usr/bin/g++')
-cfg['include_dirs'] = [pybind11.get_include(), pybind11.get_include(True)]
-# Try to find Eigen headers from env or common pip locations
-if 'EIGEN_INCLUDE' in os.environ:
-    cfg['include_dirs'].append(os.environ['EIGEN_INCLUDE'])
-else:
-    # Common system/conda locations
-    for candidate in [
-        '/usr/include/eigen3',
-        os.path.expanduser('~/.local/eigen3/usr/include/eigen3'),
-        os.path.expanduser('~/.local/eigen3_pkg/usr/include/eigen3'),
-        os.path.join(os.environ.get('CONDA_PREFIX', ''), 'include', 'eigen3'),
-        os.path.join(os.environ.get('CONDA_PREFIX', ''), 'include')
-    ]:
-        if candidate and os.path.isdir(candidate):
-            cfg['include_dirs'].append(candidate)
-    for base in site.getsitepackages():
-        candidate = os.path.join(base, 'eigen', 'include', 'eigen3')
-        if os.path.isdir(candidate):
-            cfg['include_dirs'].append(candidate)
-            break
-cfg['compiler_args'] = ['-O3', '-std=gnu++14', '-U_GLIBCXX_HAVE_TIMESPEC_GET']
-%>
+
 
 #include <pybind11/pybind11.h>
 #include <pybind11/eigen.h>
