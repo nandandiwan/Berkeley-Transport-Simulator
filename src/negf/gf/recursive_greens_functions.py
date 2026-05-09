@@ -34,8 +34,8 @@ try:  # Optional C++ acceleration for recursive inverse
         _cpp_recursive = cppimport.imp("negf.gf.recursive_inverse_ext")
     else:
         _cpp_recursive = None
-except BaseException:  # pragma: no cover - fallback to Python implementation
-    print("no cpp")
+except BaseException as e:  # pragma: no cover - fallback to Python implementation
+    print(f"Failed to load C++ extension. Reason: {e}")
     _cpp_recursive = None
 import scipy.constants as spc
 #from negf.self_energy.surface import surface_greens_function
@@ -439,10 +439,11 @@ def _recursive_inverse(
         Gamma_L = np.asarray(res[3])
         Gamma_R = np.asarray(res[4])
         trace_gs = res[5] if return_trace else None
+        G_lesser_blocks = [np.asarray(x) for x in res[6]] if len(res) > 6 else []
         if return_trace:
-            return G_R_diag, G_lesser_diag, G_lesser_offdiag_right, Gamma_L, Gamma_R, trace_gs
+            return G_R_diag, G_lesser_diag, G_lesser_offdiag_right, Gamma_L, Gamma_R, trace_gs, G_lesser_blocks
         return G_R_diag, G_lesser_diag, G_lesser_offdiag_right, Gamma_L, Gamma_R
-
+    print('ur fucked')
     if sp.issparse(H):
         H = H.toarray()
     n = H.shape[0]
@@ -481,8 +482,9 @@ def _recursive_inverse(
     if compute_lesser:
         if Gamma_L is None or Gamma_R is None:
             raise ValueError("compute_lesser=True requires return_gamma=True")
-        Sigma_L_lesser = Gamma_L * occ_left
-        Sigma_R_lesser = Gamma_R * occ_right
+        # Standard NEGF convention: Sigma^< = i * f * Gamma
+        Sigma_L_lesser = 1j * Gamma_L * occ_left
+        Sigma_R_lesser = 1j * Gamma_R * occ_right
 
     g_R = []
     g_lesser = [] if compute_lesser else None
@@ -568,6 +570,7 @@ def _recursive_inverse(
     if compute_lesser:
         assert G_lesser is not None
         G_lesser_diag = np.concatenate([np.diag(block) for block in G_lesser])
+    G_lesser_blocks = [np.asarray(block) for block in G_lesser] if compute_lesser and G_lesser is not None else []
 
     trace_gs = None
     if return_trace:
@@ -589,7 +592,7 @@ def _recursive_inverse(
     if return_trace:
         if return_g_trans:
             return G_R_diag, G_lesser_diag, G_lesser_offdiag_right, Gamma_L, Gamma_R, trace_gs, g_trans
-        return G_R_diag, G_lesser_diag, G_lesser_offdiag_right, Gamma_L, Gamma_R, trace_gs
+        return G_R_diag, G_lesser_diag, G_lesser_offdiag_right, Gamma_L, Gamma_R, trace_gs, G_lesser_blocks
     if return_g_trans:
         return G_R_diag, G_lesser_diag, G_lesser_offdiag_right, Gamma_L, Gamma_R, g_trans
     return G_R_diag, G_lesser_diag, G_lesser_offdiag_right, Gamma_L, Gamma_R 

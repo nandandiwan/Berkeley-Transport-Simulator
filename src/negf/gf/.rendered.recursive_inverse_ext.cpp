@@ -90,7 +90,7 @@ static py::tuple recursive_inverse_cpp(
     Matrix A00_eff = A_ii[0];
     g_R[0] = A00_eff.fullPivLu().inverse();
     if (compute_lesser) {
-        Matrix Sigma_L_lesser = Gamma_L * occ_left;
+        Matrix Sigma_L_lesser = cdouble(0,1) * Gamma_L * occ_left;
         g_lesser[0] = g_R[0] * Sigma_L_lesser * dagger(g_R[0]);
     }
 
@@ -112,8 +112,8 @@ static py::tuple recursive_inverse_cpp(
     if (n_blocks == 1) {
         G_R[0] = g_R[0];
         if (compute_lesser) {
-            Matrix Sigma_L_lesser = Gamma_L * occ_left;
-            Matrix Sigma_R_lesser = Gamma_R * occ_right;
+            Matrix Sigma_L_lesser = cdouble(0,1) * Gamma_L * occ_left;
+            Matrix Sigma_R_lesser = cdouble(0,1) * Gamma_R * occ_right;
             Matrix total_sigma_l = Sigma_L_lesser + Sigma_R_lesser;
             G_lesser[0] = G_R[0] * total_sigma_l * dagger(G_R[0]);
         }
@@ -123,7 +123,7 @@ static py::tuple recursive_inverse_cpp(
         G_R[n_blocks - 1] = (A_ii.back() - sigma_eff_R).fullPivLu().inverse();
         if (compute_lesser) {
             Matrix sigma_eff_l = A_N_Nm1 * g_lesser[n_blocks - 2] * A_ij.back();
-            Matrix Sigma_R_lesser = Gamma_R * occ_right;
+            Matrix Sigma_R_lesser = cdouble(0,1) * Gamma_R * occ_right;
             Matrix total_sigma_l = Sigma_R_lesser + sigma_eff_l;
             G_lesser[n_blocks - 1] = G_R[n_blocks - 1] * total_sigma_l * dagger(G_R[n_blocks - 1]);
         }
@@ -177,15 +177,22 @@ static py::tuple recursive_inverse_cpp(
 
     py::list offdiag_py;
     for (const auto &m : G_lesser_offdiag_right) offdiag_py.append(py::cast(m));
-
+    py::list G_lesser_blocks_py;
+    if (compute_lesser) {
+        for (const auto &m : G_lesser) {
+            G_lesser_blocks_py.append(py::cast(m));
+        }
+    }
     return py::make_tuple(
         G_R_diag,
         G_lesser_diag,
         offdiag_py,
         Gamma_L,
         Gamma_R,
-        trace_gs
+        trace_gs,
+        G_lesser_blocks_py
     );
+
 }
 
 PYBIND11_MODULE(recursive_inverse_ext, m) {

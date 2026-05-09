@@ -10,3 +10,11 @@ src/FEM/
 src/NEGF/
 src/NEGF_nanowire/
 src/DFT_data/
+src/DFT_test/
+src/hamiltonian/
+src/hexagonal_warping/
+src/negf/self_energy/
+src/poisson/
+src/device_sims/2D_device.ipynb
+src/device_sims/device.ipynb
+*.npz

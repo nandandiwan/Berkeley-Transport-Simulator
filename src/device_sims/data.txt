@@ -1,0 +1,1414 @@
+Nd=0.0125, Na=0.0125, m=0.3, gap=0.6 eV
+
+============================================================
+Dirac diode: gap = 0.6 eV, mu_ref = 0.0
+============================================================
+  auto-tune Dirac (m=0.3, gap=0.6) phi sweep (21 pts)...
+    phi=-1.000  rho_p=-0.5463  rho_n=-0.5213
+    phi=-0.900  rho_p=-0.5120  rho_n=-0.4870
+    phi=-0.800  rho_p=-0.4673  rho_n=-0.4423
+    phi=-0.700  rho_p=-0.4071  rho_n=-0.3821
+    phi=-0.600  rho_p=-0.3485  rho_n=-0.3235
+    phi=-0.500  rho_p=-0.2951  rho_n=-0.2701
+    phi=-0.400  rho_p=-0.2417  rho_n=-0.2167
+    phi=-0.300  rho_p=-0.1867  rho_n=-0.1617
+    phi=-0.200  rho_p=-0.1293  rho_n=-0.1043
+    phi=-0.100  rho_p=-0.0700  rho_n=-0.0450
+    phi=+0.000  rho_p=-0.0125  rho_n=+0.0125
+    phi=+0.100  rho_p=+0.0450  rho_n=+0.0700
+    phi=+0.200  rho_p=+0.1043  rho_n=+0.1293
+    phi=+0.300  rho_p=+0.1617  rho_n=+0.1867
+    phi=+0.400  rho_p=+0.2167  rho_n=+0.2417
+    phi=+0.500  rho_p=+0.2701  rho_n=+0.2951
+    phi=+0.600  rho_p=+0.3235  rho_n=+0.3485
+    phi=+0.700  rho_p=+0.3821  rho_n=+0.4071
+    phi=+0.800  rho_p=+0.4423  rho_n=+0.4673
+    phi=+0.900  rho_p=+0.4870  rho_n=+0.5120
+    phi=+1.000  rho_p=+0.5213  rho_n=+0.5463
+  -> phi_p_BC = 0.021725515599924094, phi_n_BC = -0.02172551559992407
+
+  phi_p_BC = +0.0217 V
+  phi_n_BC = -0.0217 V
+  V_bi = -0.0435 V
+
+============================================================
+Equilibrium solve (V_DS = 0)
+============================================================
+  alpha (from a_lat=0.5) = 1399.90
+  cached self-energies (Dirac, n_per=40): 121 pts in 1.5s
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.688 <p>=0.688
+  iter  1  |dphi|=3.112e-03  rho_p=-0.0034  rho_n=+0.0034  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter  2  |dphi|=3.119e-03  rho_p=-0.0035  rho_n=+0.0035  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.688 <p>=0.688
+  iter  3  |dphi|=4.739e-03  rho_p=-0.0035  rho_n=+0.0035  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter  4  |dphi|=1.270e-01  rho_p=-0.0034  rho_n=+0.0034  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.0s <n>=0.688 <p>=0.688
+  iter  5  |dphi|=1.416e-01  rho_p=-0.0026  rho_n=+0.0026  (16.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.0s <n>=0.688 <p>=0.688
+  iter  6  |dphi|=7.699e-02  rho_p=-0.0015  rho_n=+0.0015  (16.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter  7  |dphi|=7.736e-02  rho_p=-0.0010  rho_n=+0.0010  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter  8  |dphi|=3.878e-02  rho_p=-0.0004  rho_n=+0.0004  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.1s <n>=0.688 <p>=0.688
+  iter  9  |dphi|=2.832e-02  rho_p=-0.0002  rho_n=+0.0002  (16.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 10  |dphi|=2.027e-02  rho_p=-0.0000  rho_n=+0.0000  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.688 <p>=0.688
+  iter 11  |dphi|=2.089e-02  rho_p=+0.0001  rho_n=-0.0001  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 12  |dphi|=1.133e-02  rho_p=+0.0002  rho_n=-0.0002  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  iter 13  |dphi|=1.270e-02  rho_p=+0.0003  rho_n=-0.0003  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 14  |dphi|=1.533e-02  rho_p=+0.0003  rho_n=-0.0003  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 15  |dphi|=1.673e-02  rho_p=+0.0004  rho_n=-0.0004  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.688 <p>=0.688
+  iter 16  |dphi|=1.134e-02  rho_p=+0.0004  rho_n=-0.0004  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.688 <p>=0.688
+  iter 17  |dphi|=9.832e-03  rho_p=+0.0004  rho_n=-0.0004  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter 18  |dphi|=1.412e-02  rho_p=+0.0004  rho_n=-0.0004  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.688 <p>=0.688
+  iter 19  |dphi|=2.020e-02  rho_p=+0.0004  rho_n=-0.0004  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter 20  |dphi|=1.212e-02  rho_p=+0.0004  rho_n=-0.0004  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  iter 21  |dphi|=1.216e-02  rho_p=+0.0004  rho_n=-0.0004  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 15.5s <n>=0.688 <p>=0.688
+  iter 22  |dphi|=1.220e-02  rho_p=+0.0004  rho_n=-0.0004  (16.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 15.9s <n>=0.688 <p>=0.688
+  iter 23  |dphi|=1.272e-02  rho_p=+0.0004  rho_n=-0.0004  (16.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter 24  |dphi|=6.892e-03  rho_p=+0.0004  rho_n=-0.0004  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 25  |dphi|=4.569e-03  rho_p=+0.0004  rho_n=-0.0004  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.688 <p>=0.688
+  iter 26  |dphi|=1.612e-03  rho_p=+0.0004  rho_n=-0.0004  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 15.9s <n>=0.688 <p>=0.688
+  iter 27  |dphi|=8.458e-04  rho_p=+0.0004  rho_n=-0.0004  (16.7s)
+  converged at iter 27
+  NEGF (Dirac, 2-orb): 121 E-pts in 15.9s <n>=0.688 <p>=0.688
+
+============================================================
+Bias point 1/15: V_DS = -0.400 V
+============================================================
+  alpha (from a_lat=0.5) = 1399.90
+  cached self-energies (Dirac, n_per=40): 121 pts in 1.5s
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.742 <p>=0.627
+  iter  1  |dphi|=1.144e-01  rho_p=-0.0367  rho_n=-0.1941  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.743 <p>=0.626
+  iter  2  |dphi|=1.111e-01  rho_p=-0.0369  rho_n=-0.1951  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.743 <p>=0.626
+  iter  3  |dphi|=3.577e+00  rho_p=-0.0371  rho_n=-0.1961  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.0s <n>=0.734 <p>=0.638
+  iter  4  |dphi|=5.993e+00  rho_p=-0.0305  rho_n=-0.1614  (16.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.717 <p>=0.658
+  iter  5  |dphi|=3.335e+00  rho_p=-0.0184  rho_n=-0.0978  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.706 <p>=0.669
+  iter  6  |dphi|=1.890e+00  rho_p=-0.0115  rho_n=-0.0605  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.0s <n>=0.701 <p>=0.676
+  iter  7  |dphi|=1.242e+00  rho_p=-0.0075  rho_n=-0.0393  (16.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.0s <n>=0.696 <p>=0.680
+  iter  8  |dphi|=1.183e+00  rho_p=-0.0050  rho_n=-0.0262  (16.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.0s <n>=0.693 <p>=0.683
+  iter  9  |dphi|=7.168e-01  rho_p=-0.0028  rho_n=-0.0149  (16.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.2s <n>=0.691 <p>=0.685
+  iter 10  |dphi|=4.467e-01  rho_p=-0.0016  rho_n=-0.0082  (18.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.690 <p>=0.686
+  iter 11  |dphi|=1.202e+00  rho_p=-0.0009  rho_n=-0.0051  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.690 <p>=0.686
+  iter 12  |dphi|=4.779e-01  rho_p=-0.0010  rho_n=-0.0050  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.690 <p>=0.686
+  iter 13  |dphi|=7.892e-01  rho_p=-0.0005  rho_n=-0.0025  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.690 <p>=0.686
+  iter 14  |dphi|=4.185e-01  rho_p=-0.0006  rho_n=-0.0027  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.689 <p>=0.687
+  iter 15  |dphi|=7.781e-01  rho_p=-0.0004  rho_n=-0.0014  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.689 <p>=0.687
+  iter 16  |dphi|=5.782e-01  rho_p=-0.0002  rho_n=-0.0005  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.689 <p>=0.687
+  iter 17  |dphi|=3.972e-01  rho_p=-0.0000  rho_n=+0.0002  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 15.8s <n>=0.689 <p>=0.687
+  iter 18  |dphi|=6.117e-01  rho_p=+0.0000  rho_n=+0.0005  (16.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.689 <p>=0.687
+  iter 19  |dphi|=8.738e-01  rho_p=-0.0001  rho_n=+0.0003  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.689 <p>=0.687
+  iter 20  |dphi|=5.133e-01  rho_p=-0.0001  rho_n=+0.0001  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.689 <p>=0.687
+  iter 21  |dphi|=5.376e-01  rho_p=-0.0002  rho_n=-0.0003  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.689 <p>=0.687
+  iter 22  |dphi|=4.261e-01  rho_p=-0.0001  rho_n=+0.0001  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.689 <p>=0.687
+  iter 23  |dphi|=5.507e-01  rho_p=-0.0002  rho_n=-0.0005  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.689 <p>=0.687
+  iter 24  |dphi|=4.192e-01  rho_p=-0.0002  rho_n=-0.0005  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.689 <p>=0.687
+  iter 25  |dphi|=2.445e-01  rho_p=-0.0002  rho_n=-0.0005  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.689 <p>=0.687
+  iter 26  |dphi|=2.105e-01  rho_p=-0.0002  rho_n=-0.0005  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.689 <p>=0.687
+  iter 27  |dphi|=1.157e-01  rho_p=-0.0002  rho_n=-0.0005  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.689 <p>=0.687
+  iter 28  |dphi|=1.603e-01  rho_p=-0.0002  rho_n=-0.0004  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.689 <p>=0.687
+  iter 29  |dphi|=7.666e-02  rho_p=-0.0001  rho_n=-0.0002  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.689 <p>=0.687
+  iter 30  |dphi|=6.514e-02  rho_p=-0.0001  rho_n=-0.0002  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.689 <p>=0.687
+  iter 31  |dphi|=3.855e-02  rho_p=-0.0001  rho_n=-0.0001  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.689 <p>=0.687
+  iter 32  |dphi|=8.915e-02  rho_p=-0.0001  rho_n=-0.0000  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.689 <p>=0.687
+  iter 33  |dphi|=5.778e-02  rho_p=-0.0001  rho_n=-0.0001  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.0s <n>=0.689 <p>=0.687
+  iter 34  |dphi|=2.765e-02  rho_p=-0.0001  rho_n=-0.0000  (16.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.689 <p>=0.687
+  iter 35  |dphi|=8.303e-02  rho_p=-0.0001  rho_n=-0.0000  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.689 <p>=0.687
+  iter 36  |dphi|=1.165e-01  rho_p=-0.0000  rho_n=+0.0003  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.689 <p>=0.687
+  iter 37  |dphi|=5.660e-02  rho_p=+0.0001  rho_n=+0.0008  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.0s <n>=0.689 <p>=0.687
+  iter 38  |dphi|=1.548e-01  rho_p=+0.0001  rho_n=+0.0010  (16.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.689 <p>=0.687
+  iter 39  |dphi|=2.228e-01  rho_p=+0.0003  rho_n=+0.0022  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.689 <p>=0.687
+  iter 40  |dphi|=1.391e-01  rho_p=+0.0004  rho_n=+0.0025  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.688 <p>=0.688
+  I = -5.0160e-16 A
+
+============================================================
+Bias point 2/15: V_DS = -0.300 V
+============================================================
+  alpha (from a_lat=0.5) = 1399.90
+  cached self-energies (Dirac, n_per=40): 121 pts in 1.5s
+  NEGF (Dirac, 2-orb): 121 E-pts in 15.9s <n>=0.730 <p>=0.643
+  iter  1  |dphi|=8.613e-02  rho_p=-0.0286  rho_n=-0.1457  (16.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.730 <p>=0.642
+  iter  2  |dphi|=8.357e-02  rho_p=-0.0288  rho_n=-0.1465  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.730 <p>=0.642
+  iter  3  |dphi|=2.414e+00  rho_p=-0.0289  rho_n=-0.1473  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.724 <p>=0.650
+  iter  4  |dphi|=4.723e+00  rho_p=-0.0242  rho_n=-0.1233  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.710 <p>=0.666
+  iter  5  |dphi|=2.394e+00  rho_p=-0.0140  rho_n=-0.0722  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.702 <p>=0.674
+  iter  6  |dphi|=1.522e+00  rho_p=-0.0088  rho_n=-0.0454  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.0s <n>=0.697 <p>=0.679
+  iter  7  |dphi|=1.056e+00  rho_p=-0.0054  rho_n=-0.0288  (16.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.694 <p>=0.682
+  iter  8  |dphi|=7.389e-01  rho_p=-0.0032  rho_n=-0.0180  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.692 <p>=0.685
+  iter  9  |dphi|=4.959e-01  rho_p=-0.0017  rho_n=-0.0104  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.691 <p>=0.686
+  iter 10  |dphi|=7.182e-01  rho_p=-0.0009  rho_n=-0.0064  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.1s <n>=0.690 <p>=0.686
+  iter 11  |dphi|=5.058e-01  rho_p=-0.0007  rho_n=-0.0056  (16.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.690 <p>=0.686
+  iter 12  |dphi|=4.989e-01  rho_p=-0.0003  rho_n=-0.0034  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.689 <p>=0.687
+  iter 13  |dphi|=3.497e-01  rho_p=+0.0001  rho_n=-0.0014  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.689 <p>=0.688
+  iter 14  |dphi|=2.701e-01  rho_p=+0.0005  rho_n=+0.0009  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter 15  |dphi|=2.739e-01  rho_p=+0.0008  rho_n=+0.0022  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.688 <p>=0.688
+  iter 16  |dphi|=4.182e-01  rho_p=+0.0010  rho_n=+0.0030  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 15.9s <n>=0.688 <p>=0.689
+  iter 17  |dphi|=5.099e-01  rho_p=+0.0013  rho_n=+0.0046  (16.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.688 <p>=0.688
+  iter 18  |dphi|=3.421e-01  rho_p=+0.0012  rho_n=+0.0040  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.689
+  iter 19  |dphi|=3.663e-01  rho_p=+0.0013  rho_n=+0.0045  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter 20  |dphi|=3.492e-01  rho_p=+0.0013  rho_n=+0.0042  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.688 <p>=0.688
+  iter 21  |dphi|=4.610e-01  rho_p=+0.0012  rho_n=+0.0039  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 15.8s <n>=0.688 <p>=0.688
+  iter 22  |dphi|=3.350e-01  rho_p=+0.0011  rho_n=+0.0032  (16.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 15.9s <n>=0.688 <p>=0.688
+  iter 23  |dphi|=2.980e-01  rho_p=+0.0011  rho_n=+0.0027  (16.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 24  |dphi|=4.689e-01  rho_p=+0.0011  rho_n=+0.0026  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.1s <n>=0.689 <p>=0.688
+  iter 25  |dphi|=3.763e-01  rho_p=+0.0009  rho_n=+0.0017  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.1s <n>=0.688 <p>=0.688
+  iter 26  |dphi|=3.413e-01  rho_p=+0.0010  rho_n=+0.0020  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.689 <p>=0.688
+  iter 27  |dphi|=2.336e-01  rho_p=+0.0009  rho_n=+0.0016  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.689 <p>=0.688
+  iter 28  |dphi|=1.856e-01  rho_p=+0.0010  rho_n=+0.0016  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.689 <p>=0.688
+  iter 29  |dphi|=1.782e-01  rho_p=+0.0010  rho_n=+0.0016  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.689 <p>=0.687
+  iter 30  |dphi|=1.185e-01  rho_p=+0.0010  rho_n=+0.0016  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.689 <p>=0.687
+  iter 31  |dphi|=9.967e-02  rho_p=+0.0010  rho_n=+0.0016  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.689 <p>=0.687
+  iter 32  |dphi|=1.588e-02  rho_p=+0.0010  rho_n=+0.0016  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.689 <p>=0.687
+  iter 33  |dphi|=7.056e-02  rho_p=+0.0010  rho_n=+0.0016  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.689 <p>=0.687
+  iter 34  |dphi|=3.968e-02  rho_p=+0.0010  rho_n=+0.0016  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.689 <p>=0.687
+  iter 35  |dphi|=2.234e-02  rho_p=+0.0010  rho_n=+0.0015  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.1s <n>=0.689 <p>=0.687
+  iter 36  |dphi|=1.939e-02  rho_p=+0.0010  rho_n=+0.0015  (16.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.689 <p>=0.687
+  iter 37  |dphi|=7.466e-02  rho_p=+0.0010  rho_n=+0.0015  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.1s <n>=0.689 <p>=0.687
+  iter 38  |dphi|=7.050e-02  rho_p=+0.0010  rho_n=+0.0015  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.689 <p>=0.687
+  iter 39  |dphi|=8.853e-02  rho_p=+0.0010  rho_n=+0.0015  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.689 <p>=0.687
+  iter 40  |dphi|=5.128e-02  rho_p=+0.0010  rho_n=+0.0016  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.689 <p>=0.687
+  I = -1.5318e-17 A
+
+============================================================
+Bias point 3/15: V_DS = -0.200 V
+============================================================
+  alpha (from a_lat=0.5) = 1399.90
+  cached self-energies (Dirac, n_per=40): 121 pts in 1.5s
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.717 <p>=0.658
+  iter  1  |dphi|=5.825e-02  rho_p=-0.0202  rho_n=-0.0965  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.717 <p>=0.658
+  iter  2  |dphi|=5.650e-02  rho_p=-0.0203  rho_n=-0.0970  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.717 <p>=0.658
+  iter  3  |dphi|=1.362e+00  rho_p=-0.0205  rho_n=-0.0975  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.1s <n>=0.713 <p>=0.662
+  iter  4  |dphi|=3.231e+00  rho_p=-0.0176  rho_n=-0.0839  (16.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.0s <n>=0.703 <p>=0.673
+  iter  5  |dphi|=1.581e+00  rho_p=-0.0101  rho_n=-0.0485  (16.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.698 <p>=0.678
+  iter  6  |dphi|=1.380e+00  rho_p=-0.0065  rho_n=-0.0316  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.694 <p>=0.682
+  iter  7  |dphi|=6.378e-01  rho_p=-0.0034  rho_n=-0.0182  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.1s <n>=0.692 <p>=0.685
+  iter  8  |dphi|=3.883e-01  rho_p=-0.0019  rho_n=-0.0109  (16.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.1s <n>=0.690 <p>=0.686
+  iter  9  |dphi|=4.243e-01  rho_p=-0.0010  rho_n=-0.0070  (16.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.690 <p>=0.686
+  iter 10  |dphi|=3.588e-01  rho_p=-0.0009  rho_n=-0.0063  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.690 <p>=0.686
+  iter 11  |dphi|=3.469e-01  rho_p=-0.0005  rho_n=-0.0048  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.689 <p>=0.687
+  iter 12  |dphi|=2.981e-01  rho_p=-0.0002  rho_n=-0.0030  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.1s <n>=0.689 <p>=0.687
+  iter 13  |dphi|=2.554e-01  rho_p=+0.0000  rho_n=-0.0023  (17.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.689 <p>=0.687
+  iter 14  |dphi|=2.915e-01  rho_p=+0.0004  rho_n=-0.0004  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 15.9s <n>=0.689 <p>=0.688
+  iter 15  |dphi|=1.461e-01  rho_p=+0.0005  rho_n=+0.0001  (16.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 16  |dphi|=3.571e-01  rho_p=+0.0007  rho_n=+0.0010  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.689 <p>=0.688
+  iter 17  |dphi|=2.958e-01  rho_p=+0.0006  rho_n=+0.0003  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter 18  |dphi|=2.685e-01  rho_p=+0.0007  rho_n=+0.0007  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.688 <p>=0.688
+  iter 19  |dphi|=2.008e-01  rho_p=+0.0008  rho_n=+0.0010  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  iter 20  |dphi|=1.759e-01  rho_p=+0.0008  rho_n=+0.0010  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.0s <n>=0.688 <p>=0.688
+  iter 21  |dphi|=3.266e-01  rho_p=+0.0008  rho_n=+0.0013  (16.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 22  |dphi|=2.310e-01  rho_p=+0.0008  rho_n=+0.0009  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.688 <p>=0.688
+  iter 23  |dphi|=1.888e-01  rho_p=+0.0009  rho_n=+0.0011  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.688 <p>=0.688
+  iter 24  |dphi|=1.599e-01  rho_p=+0.0009  rho_n=+0.0010  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.688 <p>=0.688
+  iter 25  |dphi|=3.379e-01  rho_p=+0.0009  rho_n=+0.0014  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 26  |dphi|=2.239e-01  rho_p=+0.0010  rho_n=+0.0014  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.0s <n>=0.688 <p>=0.688
+  iter 27  |dphi|=1.478e-01  rho_p=+0.0010  rho_n=+0.0014  (16.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.688 <p>=0.688
+  iter 28  |dphi|=1.111e-01  rho_p=+0.0010  rho_n=+0.0014  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.688 <p>=0.688
+  iter 29  |dphi|=1.056e-01  rho_p=+0.0010  rho_n=+0.0014  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.688 <p>=0.688
+  iter 30  |dphi|=4.619e-02  rho_p=+0.0010  rho_n=+0.0015  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.1s <n>=0.688 <p>=0.688
+  iter 31  |dphi|=2.303e-02  rho_p=+0.0011  rho_n=+0.0015  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.688 <p>=0.688
+  iter 32  |dphi|=1.803e-02  rho_p=+0.0011  rho_n=+0.0015  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.688 <p>=0.688
+  iter 33  |dphi|=2.175e-02  rho_p=+0.0010  rho_n=+0.0015  (17.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 34  |dphi|=3.624e-02  rho_p=+0.0010  rho_n=+0.0014  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.688 <p>=0.688
+  iter 35  |dphi|=1.341e-02  rho_p=+0.0011  rho_n=+0.0015  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.0s <n>=0.688 <p>=0.688
+  iter 36  |dphi|=2.387e-02  rho_p=+0.0011  rho_n=+0.0015  (16.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 37  |dphi|=4.125e-02  rho_p=+0.0011  rho_n=+0.0016  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.688 <p>=0.688
+  iter 38  |dphi|=1.735e-02  rho_p=+0.0011  rho_n=+0.0016  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.688 <p>=0.688
+  iter 39  |dphi|=9.020e-02  rho_p=+0.0011  rho_n=+0.0017  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.1s <n>=0.688 <p>=0.688
+  iter 40  |dphi|=9.593e-03  rho_p=+0.0011  rho_n=+0.0018  (16.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.3s <n>=0.688 <p>=0.688
+  I = -7.1188e-19 A
+
+============================================================
+Bias point 4/15: V_DS = -0.100 V
+============================================================
+  alpha (from a_lat=0.5) = 1399.90
+  cached self-energies (Dirac, n_per=40): 121 pts in 1.5s
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.703 <p>=0.674
+  iter  1  |dphi|=2.978e-02  rho_p=-0.0117  rho_n=-0.0458  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.703 <p>=0.674
+  iter  2  |dphi|=2.884e-02  rho_p=-0.0118  rho_n=-0.0460  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.703 <p>=0.673
+  iter  3  |dphi|=4.673e-01  rho_p=-0.0119  rho_n=-0.0463  (17.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.1s <n>=0.702 <p>=0.675
+  iter  4  |dphi|=1.628e+00  rho_p=-0.0108  rho_n=-0.0422  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.696 <p>=0.680
+  iter  5  |dphi|=8.526e-01  rho_p=-0.0064  rho_n=-0.0261  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.694 <p>=0.683
+  iter  6  |dphi|=7.039e-01  rho_p=-0.0041  rho_n=-0.0177  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.691 <p>=0.685
+  iter  7  |dphi|=3.465e-01  rho_p=-0.0022  rho_n=-0.0108  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.690 <p>=0.686
+  iter  8  |dphi|=2.278e-01  rho_p=-0.0012  rho_n=-0.0070  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 15.9s <n>=0.689 <p>=0.687
+  iter  9  |dphi|=1.809e-01  rho_p=-0.0006  rho_n=-0.0048  (16.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.689 <p>=0.687
+  iter 10  |dphi|=1.186e-01  rho_p=-0.0003  rho_n=-0.0035  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.689 <p>=0.687
+  iter 11  |dphi|=1.266e-01  rho_p=-0.0000  rho_n=-0.0027  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.689 <p>=0.688
+  iter 12  |dphi|=1.797e-01  rho_p=+0.0001  rho_n=-0.0021  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  iter 13  |dphi|=2.426e-01  rho_p=+0.0002  rho_n=-0.0017  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 14  |dphi|=1.643e-01  rho_p=+0.0004  rho_n=-0.0011  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.688 <p>=0.688
+  iter 15  |dphi|=1.123e-01  rho_p=+0.0004  rho_n=-0.0012  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.0s <n>=0.688 <p>=0.688
+  iter 16  |dphi|=1.407e-01  rho_p=+0.0006  rho_n=-0.0008  (16.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 17  |dphi|=1.892e-01  rho_p=+0.0005  rho_n=-0.0010  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.1s <n>=0.688 <p>=0.688
+  iter 18  |dphi|=1.140e-01  rho_p=+0.0006  rho_n=-0.0009  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.688 <p>=0.688
+  iter 19  |dphi|=9.580e-02  rho_p=+0.0006  rho_n=-0.0009  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.688 <p>=0.688
+  iter 20  |dphi|=1.417e-01  rho_p=+0.0006  rho_n=-0.0008  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 21  |dphi|=1.707e-01  rho_p=+0.0007  rho_n=-0.0008  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 22  |dphi|=8.922e-02  rho_p=+0.0007  rho_n=-0.0009  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  iter 23  |dphi|=8.750e-02  rho_p=+0.0007  rho_n=-0.0009  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter 24  |dphi|=5.286e-02  rho_p=+0.0007  rho_n=-0.0009  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  iter 25  |dphi|=6.949e-02  rho_p=+0.0008  rho_n=-0.0009  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 26  |dphi|=4.066e-02  rho_p=+0.0008  rho_n=-0.0009  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.0s <n>=0.688 <p>=0.688
+  iter 27  |dphi|=2.006e-02  rho_p=+0.0008  rho_n=-0.0010  (16.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter 28  |dphi|=1.644e-02  rho_p=+0.0008  rho_n=-0.0010  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 29  |dphi|=9.706e-03  rho_p=+0.0008  rho_n=-0.0010  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.688 <p>=0.688
+  iter 30  |dphi|=5.468e-02  rho_p=+0.0008  rho_n=-0.0010  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 15.9s <n>=0.688 <p>=0.688
+  iter 31  |dphi|=2.869e-02  rho_p=+0.0008  rho_n=-0.0009  (16.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 32  |dphi|=8.745e-02  rho_p=+0.0007  rho_n=-0.0010  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.0s <n>=0.688 <p>=0.688
+  iter 33  |dphi|=1.411e-01  rho_p=+0.0007  rho_n=-0.0009  (16.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.1s <n>=0.688 <p>=0.688
+  iter 34  |dphi|=6.105e-02  rho_p=+0.0006  rho_n=-0.0010  (16.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.688 <p>=0.688
+  iter 35  |dphi|=6.031e-02  rho_p=+0.0006  rho_n=-0.0010  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.1s <n>=0.688 <p>=0.688
+  iter 36  |dphi|=1.924e-02  rho_p=+0.0005  rho_n=-0.0011  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 37  |dphi|=5.563e-02  rho_p=+0.0005  rho_n=-0.0011  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 15.6s <n>=0.688 <p>=0.688
+  iter 38  |dphi|=1.743e-02  rho_p=+0.0005  rho_n=-0.0010  (16.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.688 <p>=0.688
+  iter 39  |dphi|=7.017e-02  rho_p=+0.0005  rho_n=-0.0010  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.688 <p>=0.688
+  iter 40  |dphi|=7.845e-02  rho_p=+0.0005  rho_n=-0.0009  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.688 <p>=0.688
+  I = -4.8037e-20 A
+
+============================================================
+Bias point 5/15: V_DS = -0.050 V
+============================================================
+  alpha (from a_lat=0.5) = 1399.90
+  cached self-energies (Dirac, n_per=40): 121 pts in 1.5s
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.1s <n>=0.696 <p>=0.681
+  iter  1  |dphi|=1.478e-02  rho_p=-0.0076  rho_n=-0.0217  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.1s <n>=0.696 <p>=0.681
+  iter  2  |dphi|=1.432e-02  rho_p=-0.0076  rho_n=-0.0218  (16.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.696 <p>=0.681
+  iter  3  |dphi|=1.310e-01  rho_p=-0.0077  rho_n=-0.0219  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.695 <p>=0.681
+  iter  4  |dphi|=7.780e-01  rho_p=-0.0073  rho_n=-0.0209  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.693 <p>=0.684
+  iter  5  |dphi|=3.898e-01  rho_p=-0.0045  rho_n=-0.0136  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.1s <n>=0.691 <p>=0.685
+  iter  6  |dphi|=4.164e-01  rho_p=-0.0031  rho_n=-0.0097  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.690 <p>=0.686
+  iter  7  |dphi|=1.726e-01  rho_p=-0.0017  rho_n=-0.0057  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.689 <p>=0.687
+  iter  8  |dphi|=1.172e-01  rho_p=-0.0010  rho_n=-0.0040  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.1s <n>=0.689 <p>=0.687
+  iter  9  |dphi|=1.110e-01  rho_p=-0.0006  rho_n=-0.0028  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.689 <p>=0.688
+  iter 10  |dphi|=8.713e-02  rho_p=-0.0003  rho_n=-0.0019  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter 11  |dphi|=5.840e-02  rho_p=-0.0000  rho_n=-0.0013  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  iter 12  |dphi|=6.299e-02  rho_p=+0.0002  rho_n=-0.0008  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter 13  |dphi|=5.821e-02  rho_p=+0.0003  rho_n=-0.0005  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 15.9s <n>=0.688 <p>=0.688
+  iter 14  |dphi|=9.197e-02  rho_p=+0.0004  rho_n=-0.0002  (16.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter 15  |dphi|=5.528e-02  rho_p=+0.0005  rho_n=-0.0000  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 16  |dphi|=5.463e-02  rho_p=+0.0005  rho_n=+0.0001  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 17  |dphi|=9.804e-02  rho_p=+0.0006  rho_n=+0.0002  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter 18  |dphi|=3.920e-02  rho_p=+0.0006  rho_n=+0.0001  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.1s <n>=0.688 <p>=0.688
+  iter 19  |dphi|=7.758e-02  rho_p=+0.0006  rho_n=+0.0000  (16.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.688 <p>=0.688
+  iter 20  |dphi|=6.478e-02  rho_p=+0.0005  rho_n=-0.0001  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  iter 21  |dphi|=1.027e-01  rho_p=+0.0005  rho_n=-0.0003  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  iter 22  |dphi|=5.161e-02  rho_p=+0.0004  rho_n=-0.0005  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.688 <p>=0.688
+  iter 23  |dphi|=4.417e-02  rho_p=+0.0004  rho_n=-0.0006  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter 24  |dphi|=2.519e-02  rho_p=+0.0003  rho_n=-0.0007  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 15.8s <n>=0.688 <p>=0.688
+  iter 25  |dphi|=3.635e-02  rho_p=+0.0003  rho_n=-0.0008  (16.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.688 <p>=0.688
+  iter 26  |dphi|=2.129e-02  rho_p=+0.0004  rho_n=-0.0007  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter 27  |dphi|=2.341e-02  rho_p=+0.0004  rho_n=-0.0007  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.0s <n>=0.688 <p>=0.688
+  iter 28  |dphi|=1.359e-02  rho_p=+0.0004  rho_n=-0.0007  (16.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter 29  |dphi|=5.357e-03  rho_p=+0.0004  rho_n=-0.0007  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter 30  |dphi|=5.425e-03  rho_p=+0.0004  rho_n=-0.0007  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.688 <p>=0.688
+  iter 31  |dphi|=4.661e-03  rho_p=+0.0004  rho_n=-0.0007  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.0s <n>=0.688 <p>=0.688
+  iter 32  |dphi|=1.026e-02  rho_p=+0.0004  rho_n=-0.0007  (16.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter 33  |dphi|=5.796e-03  rho_p=+0.0004  rho_n=-0.0007  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.0s <n>=0.688 <p>=0.688
+  iter 34  |dphi|=9.066e-03  rho_p=+0.0004  rho_n=-0.0008  (16.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter 35  |dphi|=2.569e-02  rho_p=+0.0003  rho_n=-0.0008  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 15.8s <n>=0.688 <p>=0.688
+  iter 36  |dphi|=2.077e-02  rho_p=+0.0003  rho_n=-0.0009  (16.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.688 <p>=0.688
+  iter 37  |dphi|=1.114e-02  rho_p=+0.0003  rho_n=-0.0009  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.688 <p>=0.688
+  iter 38  |dphi|=1.488e-02  rho_p=+0.0003  rho_n=-0.0009  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter 39  |dphi|=7.045e-03  rho_p=+0.0003  rho_n=-0.0010  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter 40  |dphi|=1.879e-02  rho_p=+0.0003  rho_n=-0.0010  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.688 <p>=0.688
+  I = -1.1798e-20 A
+
+============================================================
+Bias point 6/15: V_DS = +0.000 V
+============================================================
+  alpha (from a_lat=0.5) = 1399.90
+  cached self-energies (Dirac, n_per=40): 121 pts in 1.5s
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter  1  |dphi|=3.112e-03  rho_p=-0.0034  rho_n=+0.0034  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter  2  |dphi|=3.119e-03  rho_p=-0.0035  rho_n=+0.0035  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.688 <p>=0.688
+  iter  3  |dphi|=4.739e-03  rho_p=-0.0035  rho_n=+0.0035  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.1s <n>=0.688 <p>=0.688
+  iter  4  |dphi|=1.270e-01  rho_p=-0.0034  rho_n=+0.0034  (16.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter  5  |dphi|=1.416e-01  rho_p=-0.0026  rho_n=+0.0026  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.688 <p>=0.688
+  iter  6  |dphi|=7.699e-02  rho_p=-0.0015  rho_n=+0.0015  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.688 <p>=0.688
+  iter  7  |dphi|=7.736e-02  rho_p=-0.0010  rho_n=+0.0010  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter  8  |dphi|=3.878e-02  rho_p=-0.0004  rho_n=+0.0004  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.688 <p>=0.688
+  iter  9  |dphi|=2.832e-02  rho_p=-0.0002  rho_n=+0.0002  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.688 <p>=0.688
+  iter 10  |dphi|=2.027e-02  rho_p=-0.0000  rho_n=+0.0000  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  iter 11  |dphi|=2.089e-02  rho_p=+0.0001  rho_n=-0.0001  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 12  |dphi|=1.133e-02  rho_p=+0.0002  rho_n=-0.0002  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 15.9s <n>=0.688 <p>=0.688
+  iter 13  |dphi|=1.270e-02  rho_p=+0.0003  rho_n=-0.0003  (16.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.1s <n>=0.688 <p>=0.688
+  iter 14  |dphi|=1.533e-02  rho_p=+0.0003  rho_n=-0.0003  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.688 <p>=0.688
+  iter 15  |dphi|=1.673e-02  rho_p=+0.0004  rho_n=-0.0004  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.688 <p>=0.688
+  iter 16  |dphi|=1.134e-02  rho_p=+0.0004  rho_n=-0.0004  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.688 <p>=0.688
+  iter 17  |dphi|=9.832e-03  rho_p=+0.0004  rho_n=-0.0004  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  iter 18  |dphi|=1.412e-02  rho_p=+0.0004  rho_n=-0.0004  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.1s <n>=0.688 <p>=0.688
+  iter 19  |dphi|=2.020e-02  rho_p=+0.0004  rho_n=-0.0004  (16.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter 20  |dphi|=1.212e-02  rho_p=+0.0004  rho_n=-0.0004  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.688 <p>=0.688
+  iter 21  |dphi|=1.216e-02  rho_p=+0.0004  rho_n=-0.0004  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.688 <p>=0.688
+  iter 22  |dphi|=1.220e-02  rho_p=+0.0004  rho_n=-0.0004  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  iter 23  |dphi|=1.272e-02  rho_p=+0.0004  rho_n=-0.0004  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.688 <p>=0.688
+  iter 24  |dphi|=6.892e-03  rho_p=+0.0004  rho_n=-0.0004  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.688 <p>=0.688
+  iter 25  |dphi|=4.569e-03  rho_p=+0.0004  rho_n=-0.0004  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  iter 26  |dphi|=1.612e-03  rho_p=+0.0004  rho_n=-0.0004  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.688 <p>=0.688
+  iter 27  |dphi|=8.458e-04  rho_p=+0.0004  rho_n=-0.0004  (17.2s)
+  converged at iter 27
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  I = 0.0000e+00 A
+
+============================================================
+Bias point 7/15: V_DS = +0.050 V
+============================================================
+  alpha (from a_lat=0.5) = 1399.90
+  cached self-energies (Dirac, n_per=40): 121 pts in 1.5s
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.680 <p>=0.696
+  iter  1  |dphi|=1.415e-02  rho_p=+0.0016  rho_n=+0.0294  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.1s <n>=0.680 <p>=0.696
+  iter  2  |dphi|=1.375e-02  rho_p=+0.0016  rho_n=+0.0296  (16.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.680 <p>=0.696
+  iter  3  |dphi|=4.034e-01  rho_p=+0.0016  rho_n=+0.0297  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.0s <n>=0.681 <p>=0.694
+  iter  4  |dphi|=7.786e-01  rho_p=+0.0013  rho_n=+0.0246  (16.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.684 <p>=0.692
+  iter  5  |dphi|=4.015e-01  rho_p=+0.0008  rho_n=+0.0145  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.686 <p>=0.691
+  iter  6  |dphi|=3.170e-01  rho_p=+0.0005  rho_n=+0.0093  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.687 <p>=0.690
+  iter  7  |dphi|=1.634e-01  rho_p=+0.0003  rho_n=+0.0051  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.687 <p>=0.689
+  iter  8  |dphi|=8.867e-02  rho_p=+0.0002  rho_n=+0.0028  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.688 <p>=0.689
+  iter  9  |dphi|=1.082e-01  rho_p=+0.0002  rho_n=+0.0018  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.688 <p>=0.688
+  iter 10  |dphi|=9.719e-02  rho_p=+0.0001  rho_n=+0.0006  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 11  |dphi|=5.836e-02  rho_p=+0.0001  rho_n=+0.0004  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  iter 12  |dphi|=8.018e-02  rho_p=+0.0001  rho_n=-0.0000  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 13  |dphi|=1.420e-01  rho_p=+0.0001  rho_n=+0.0000  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.1s <n>=0.688 <p>=0.688
+  iter 14  |dphi|=9.336e-02  rho_p=+0.0001  rho_n=+0.0001  (16.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.688 <p>=0.688
+  iter 15  |dphi|=6.668e-02  rho_p=+0.0001  rho_n=-0.0002  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.688 <p>=0.688
+  iter 16  |dphi|=4.788e-02  rho_p=+0.0001  rho_n=-0.0001  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.1s <n>=0.688 <p>=0.688
+  iter 17  |dphi|=8.035e-02  rho_p=+0.0001  rho_n=-0.0003  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.688 <p>=0.688
+  iter 18  |dphi|=5.862e-02  rho_p=+0.0001  rho_n=-0.0002  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.688 <p>=0.688
+  iter 19  |dphi|=4.323e-02  rho_p=+0.0001  rho_n=-0.0003  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 15.9s <n>=0.688 <p>=0.688
+  iter 20  |dphi|=4.168e-02  rho_p=+0.0001  rho_n=-0.0003  (16.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  iter 21  |dphi|=7.505e-02  rho_p=+0.0001  rho_n=-0.0004  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter 22  |dphi|=7.960e-02  rho_p=+0.0000  rho_n=-0.0005  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.0s <n>=0.688 <p>=0.688
+  iter 23  |dphi|=4.338e-02  rho_p=+0.0000  rho_n=-0.0004  (16.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.688 <p>=0.688
+  iter 24  |dphi|=3.852e-02  rho_p=+0.0000  rho_n=-0.0005  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 25  |dphi|=3.132e-02  rho_p=+0.0000  rho_n=-0.0004  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.0s <n>=0.688 <p>=0.688
+  iter 26  |dphi|=3.231e-02  rho_p=+0.0000  rho_n=-0.0004  (16.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 27  |dphi|=1.758e-02  rho_p=+0.0000  rho_n=-0.0004  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 28  |dphi|=7.685e-03  rho_p=+0.0000  rho_n=-0.0004  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  iter 29  |dphi|=5.591e-02  rho_p=+0.0000  rho_n=-0.0004  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter 30  |dphi|=1.931e-02  rho_p=+0.0000  rho_n=-0.0005  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.688 <p>=0.688
+  iter 31  |dphi|=3.509e-02  rho_p=+0.0000  rho_n=-0.0004  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 15.7s <n>=0.688 <p>=0.688
+  iter 32  |dphi|=2.309e-02  rho_p=+0.0000  rho_n=-0.0005  (16.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.688 <p>=0.688
+  iter 33  |dphi|=8.674e-02  rho_p=+0.0000  rho_n=-0.0005  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 34  |dphi|=9.665e-02  rho_p=+0.0001  rho_n=-0.0006  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.688 <p>=0.688
+  iter 35  |dphi|=6.694e-02  rho_p=+0.0001  rho_n=-0.0006  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  iter 36  |dphi|=5.010e-02  rho_p=+0.0001  rho_n=-0.0006  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.688 <p>=0.688
+  iter 37  |dphi|=1.044e-01  rho_p=+0.0001  rho_n=-0.0006  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.688 <p>=0.688
+  iter 38  |dphi|=7.810e-02  rho_p=+0.0001  rho_n=-0.0006  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.688 <p>=0.688
+  iter 39  |dphi|=3.749e-02  rho_p=+0.0001  rho_n=-0.0009  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  iter 40  |dphi|=6.008e-02  rho_p=+0.0002  rho_n=-0.0008  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.1s <n>=0.688 <p>=0.688
+  I = 1.3324e-20 A
+
+============================================================
+Bias point 8/15: V_DS = +0.100 V
+============================================================
+  alpha (from a_lat=0.5) = 1399.90
+  cached self-energies (Dirac, n_per=40): 121 pts in 1.5s
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.673 <p>=0.704
+  iter  1  |dphi|=2.971e-02  rho_p=+0.0066  rho_n=+0.0545  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.673 <p>=0.704
+  iter  2  |dphi|=2.880e-02  rho_p=+0.0067  rho_n=+0.0548  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.1s <n>=0.673 <p>=0.704
+  iter  3  |dphi|=7.311e-01  rho_p=+0.0067  rho_n=+0.0550  (16.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.675 <p>=0.702
+  iter  4  |dphi|=1.707e+00  rho_p=+0.0057  rho_n=+0.0476  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.680 <p>=0.696
+  iter  5  |dphi|=8.507e-01  rho_p=+0.0031  rho_n=+0.0275  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.683 <p>=0.693
+  iter  6  |dphi|=4.716e-01  rho_p=+0.0018  rho_n=+0.0171  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.685 <p>=0.692
+  iter  7  |dphi|=3.325e-01  rho_p=+0.0012  rho_n=+0.0121  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.686 <p>=0.690
+  iter  8  |dphi|=2.613e-01  rho_p=+0.0007  rho_n=+0.0082  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.687 <p>=0.690
+  iter  9  |dphi|=1.958e-01  rho_p=+0.0003  rho_n=+0.0050  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.687 <p>=0.689
+  iter 10  |dphi|=1.377e-01  rho_p=+0.0001  rho_n=+0.0032  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.689
+  iter 11  |dphi|=1.101e-01  rho_p=-0.0000  rho_n=+0.0020  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.1s <n>=0.688 <p>=0.689
+  iter 12  |dphi|=1.212e-01  rho_p=-0.0001  rho_n=+0.0014  (17.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.2s <n>=0.688 <p>=0.688
+  iter 13  |dphi|=3.308e-01  rho_p=-0.0002  rho_n=+0.0005  (17.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  iter 14  |dphi|=1.675e-01  rho_p=-0.0003  rho_n=+0.0006  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter 15  |dphi|=1.504e-01  rho_p=-0.0003  rho_n=+0.0003  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 16  |dphi|=1.151e-01  rho_p=-0.0003  rho_n=+0.0003  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.688 <p>=0.688
+  iter 17  |dphi|=1.579e-01  rho_p=-0.0004  rho_n=+0.0002  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  iter 18  |dphi|=1.318e-01  rho_p=-0.0004  rho_n=+0.0001  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.688 <p>=0.688
+  iter 19  |dphi|=9.083e-02  rho_p=-0.0004  rho_n=+0.0001  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.688 <p>=0.688
+  iter 20  |dphi|=9.896e-02  rho_p=-0.0005  rho_n=+0.0001  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  iter 21  |dphi|=1.637e-01  rho_p=-0.0005  rho_n=+0.0002  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 22  |dphi|=1.028e-01  rho_p=-0.0005  rho_n=+0.0000  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  iter 23  |dphi|=8.089e-02  rho_p=-0.0005  rho_n=+0.0000  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.1s <n>=0.688 <p>=0.688
+  iter 24  |dphi|=5.065e-02  rho_p=-0.0006  rho_n=-0.0000  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.688 <p>=0.688
+  iter 25  |dphi|=6.087e-02  rho_p=-0.0006  rho_n=-0.0001  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.688 <p>=0.688
+  iter 26  |dphi|=3.712e-02  rho_p=-0.0006  rho_n=-0.0001  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter 27  |dphi|=1.460e-02  rho_p=-0.0006  rho_n=-0.0001  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 28  |dphi|=1.115e-02  rho_p=-0.0006  rho_n=-0.0002  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.688 <p>=0.688
+  iter 29  |dphi|=3.123e-02  rho_p=-0.0006  rho_n=-0.0001  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.688 <p>=0.688
+  iter 30  |dphi|=9.876e-03  rho_p=-0.0006  rho_n=-0.0002  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 31  |dphi|=5.433e-02  rho_p=-0.0006  rho_n=-0.0002  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  iter 32  |dphi|=6.868e-02  rho_p=-0.0006  rho_n=-0.0002  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.688 <p>=0.688
+  iter 33  |dphi|=1.905e-01  rho_p=-0.0006  rho_n=-0.0003  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 34  |dphi|=1.359e-01  rho_p=-0.0005  rho_n=-0.0005  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 35  |dphi|=8.102e-02  rho_p=-0.0005  rho_n=-0.0006  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.688 <p>=0.688
+  iter 36  |dphi|=9.978e-02  rho_p=-0.0004  rho_n=-0.0007  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.688 <p>=0.688
+  iter 37  |dphi|=9.638e-02  rho_p=-0.0004  rho_n=-0.0007  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.688 <p>=0.688
+  iter 38  |dphi|=4.820e-02  rho_p=-0.0003  rho_n=-0.0008  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.688 <p>=0.688
+  iter 39  |dphi|=7.682e-02  rho_p=-0.0003  rho_n=-0.0008  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 15.8s <n>=0.688 <p>=0.688
+  iter 40  |dphi|=5.862e-02  rho_p=-0.0003  rho_n=-0.0009  (16.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 15.9s <n>=0.688 <p>=0.688
+  I = 6.3179e-20 A
+
+============================================================
+Bias point 9/15: V_DS = +0.150 V
+============================================================
+  alpha (from a_lat=0.5) = 1399.90
+  cached self-energies (Dirac, n_per=40): 121 pts in 1.5s
+  NEGF (Dirac, 2-orb): 121 E-pts in 15.9s <n>=0.665 <p>=0.711
+  iter  1  |dphi|=4.466e-02  rho_p=+0.0116  rho_n=+0.0794  (16.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.665 <p>=0.711
+  iter  2  |dphi|=4.329e-02  rho_p=+0.0116  rho_n=+0.0799  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.0s <n>=0.665 <p>=0.711
+  iter  3  |dphi|=1.216e+00  rho_p=+0.0117  rho_n=+0.0803  (16.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 15.9s <n>=0.669 <p>=0.708
+  iter  4  |dphi|=2.408e+00  rho_p=+0.0098  rho_n=+0.0679  (16.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.676 <p>=0.700
+  iter  5  |dphi|=1.302e+00  rho_p=+0.0057  rho_n=+0.0414  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.680 <p>=0.695
+  iter  6  |dphi|=1.103e+00  rho_p=+0.0034  rho_n=+0.0256  (17.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.1s <n>=0.684 <p>=0.692
+  iter  7  |dphi|=1.653e-01  rho_p=+0.0015  rho_n=+0.0128  (17.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.685 <p>=0.692
+  iter  8  |dphi|=2.247e-01  rho_p=+0.0013  rho_n=+0.0115  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.685 <p>=0.691
+  iter  9  |dphi|=2.644e-01  rho_p=+0.0010  rho_n=+0.0091  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.1s <n>=0.686 <p>=0.691
+  iter 10  |dphi|=3.660e-01  rho_p=+0.0007  rho_n=+0.0075  (17.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.687 <p>=0.689
+  iter 11  |dphi|=1.645e-01  rho_p=+0.0002  rho_n=+0.0038  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.687 <p>=0.689
+  iter 12  |dphi|=2.205e-01  rho_p=-0.0000  rho_n=+0.0023  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.687 <p>=0.689
+  iter 13  |dphi|=3.800e-01  rho_p=-0.0002  rho_n=+0.0014  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.689
+  iter 14  |dphi|=2.655e-01  rho_p=-0.0004  rho_n=+0.0004  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.688 <p>=0.689
+  iter 15  |dphi|=2.382e-01  rho_p=-0.0004  rho_n=+0.0006  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.688 <p>=0.689
+  iter 16  |dphi|=2.097e-01  rho_p=-0.0005  rho_n=+0.0000  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.688 <p>=0.689
+  iter 17  |dphi|=2.391e-01  rho_p=-0.0005  rho_n=+0.0001  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.688 <p>=0.688
+  iter 18  |dphi|=1.832e-01  rho_p=-0.0006  rho_n=-0.0005  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  iter 19  |dphi|=1.367e-01  rho_p=-0.0006  rho_n=-0.0004  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.688 <p>=0.688
+  iter 20  |dphi|=1.114e-01  rho_p=-0.0007  rho_n=-0.0006  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.688 <p>=0.688
+  iter 21  |dphi|=2.709e-01  rho_p=-0.0007  rho_n=-0.0006  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.688 <p>=0.688
+  iter 22  |dphi|=1.124e-01  rho_p=-0.0008  rho_n=-0.0008  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.688 <p>=0.688
+  iter 23  |dphi|=1.530e-01  rho_p=-0.0008  rho_n=-0.0011  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  iter 24  |dphi|=8.611e-02  rho_p=-0.0009  rho_n=-0.0011  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  iter 25  |dphi|=9.945e-02  rho_p=-0.0009  rho_n=-0.0011  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 26  |dphi|=7.438e-02  rho_p=-0.0009  rho_n=-0.0011  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.688 <p>=0.688
+  iter 27  |dphi|=4.160e-02  rho_p=-0.0009  rho_n=-0.0011  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.688 <p>=0.688
+  iter 28  |dphi|=5.870e-03  rho_p=-0.0010  rho_n=-0.0011  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter 29  |dphi|=4.603e-03  rho_p=-0.0010  rho_n=-0.0011  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.688 <p>=0.688
+  iter 30  |dphi|=4.664e-03  rho_p=-0.0010  rho_n=-0.0011  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 31  |dphi|=2.629e-02  rho_p=-0.0010  rho_n=-0.0011  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  iter 32  |dphi|=1.092e-02  rho_p=-0.0009  rho_n=-0.0011  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  iter 33  |dphi|=1.800e-02  rho_p=-0.0009  rho_n=-0.0010  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  iter 34  |dphi|=1.116e-02  rho_p=-0.0009  rho_n=-0.0010  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.1s <n>=0.688 <p>=0.688
+  iter 35  |dphi|=2.036e-02  rho_p=-0.0009  rho_n=-0.0010  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  iter 36  |dphi|=5.235e-02  rho_p=-0.0009  rho_n=-0.0010  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.1s <n>=0.688 <p>=0.688
+  iter 37  |dphi|=2.706e-02  rho_p=-0.0010  rho_n=-0.0011  (17.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  iter 38  |dphi|=2.307e-02  rho_p=-0.0010  rho_n=-0.0012  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.688 <p>=0.688
+  iter 39  |dphi|=1.309e-02  rho_p=-0.0010  rho_n=-0.0012  (17.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.688 <p>=0.688
+  iter 40  |dphi|=1.865e-02  rho_p=-0.0010  rho_n=-0.0012  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.688 <p>=0.688
+  I = 2.6184e-19 A
+
+============================================================
+Bias point 10/15: V_DS = +0.200 V
+============================================================
+  alpha (from a_lat=0.5) = 1399.90
+  cached self-energies (Dirac, n_per=40): 121 pts in 1.5s
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.657 <p>=0.718
+  iter  1  |dphi|=5.873e-02  rho_p=+0.0163  rho_n=+0.1057  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.657 <p>=0.718
+  iter  2  |dphi|=5.696e-02  rho_p=+0.0164  rho_n=+0.1063  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.2s <n>=0.657 <p>=0.718
+  iter  3  |dphi|=1.768e+00  rho_p=+0.0165  rho_n=+0.1069  (17.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.4s <n>=0.663 <p>=0.713
+  iter  4  |dphi|=3.149e+00  rho_p=+0.0137  rho_n=+0.0876  (18.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.2s <n>=0.673 <p>=0.704
+  iter  5  |dphi|=1.678e+00  rho_p=+0.0082  rho_n=+0.0521  (18.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.678 <p>=0.698
+  iter  6  |dphi|=1.561e+00  rho_p=+0.0050  rho_n=+0.0329  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.684 <p>=0.693
+  iter  7  |dphi|=4.404e-01  rho_p=+0.0021  rho_n=+0.0142  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.685 <p>=0.691
+  iter  8  |dphi|=3.141e-01  rho_p=+0.0013  rho_n=+0.0093  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.686 <p>=0.690
+  iter  9  |dphi|=3.511e-01  rho_p=+0.0009  rho_n=+0.0063  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.687 <p>=0.690
+  iter 10  |dphi|=2.680e-01  rho_p=+0.0004  rho_n=+0.0031  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.687 <p>=0.689
+  iter 11  |dphi|=3.885e-01  rho_p=+0.0002  rho_n=+0.0022  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.687 <p>=0.689
+  iter 12  |dphi|=3.776e-01  rho_p=+0.0002  rho_n=+0.0021  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.687 <p>=0.689
+  iter 13  |dphi|=4.602e-01  rho_p=+0.0001  rho_n=+0.0014  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.687 <p>=0.689
+  iter 14  |dphi|=2.188e-01  rho_p=-0.0001  rho_n=-0.0001  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.688 <p>=0.689
+  iter 15  |dphi|=2.277e-01  rho_p=-0.0003  rho_n=-0.0011  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.688 <p>=0.688
+  iter 16  |dphi|=1.804e-01  rho_p=-0.0005  rho_n=-0.0020  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.688 <p>=0.688
+  iter 17  |dphi|=2.871e-01  rho_p=-0.0006  rho_n=-0.0030  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.688 <p>=0.688
+  iter 18  |dphi|=1.386e-01  rho_p=-0.0008  rho_n=-0.0037  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.689 <p>=0.688
+  iter 19  |dphi|=1.899e-01  rho_p=-0.0009  rho_n=-0.0043  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.689 <p>=0.688
+  iter 20  |dphi|=1.394e-01  rho_p=-0.0009  rho_n=-0.0047  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.689 <p>=0.688
+  iter 21  |dphi|=2.559e-01  rho_p=-0.0010  rho_n=-0.0049  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.689 <p>=0.688
+  iter 22  |dphi|=1.682e-01  rho_p=-0.0010  rho_n=-0.0052  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.1s <n>=0.689 <p>=0.688
+  iter 23  |dphi|=1.902e-01  rho_p=-0.0010  rho_n=-0.0051  (17.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.689 <p>=0.688
+  iter 24  |dphi|=1.478e-01  rho_p=-0.0011  rho_n=-0.0052  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.5s <n>=0.689 <p>=0.688
+  iter 25  |dphi|=1.691e-01  rho_p=-0.0011  rho_n=-0.0051  (18.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.689 <p>=0.688
+  iter 26  |dphi|=1.696e-01  rho_p=-0.0011  rho_n=-0.0051  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.1s <n>=0.689 <p>=0.688
+  iter 27  |dphi|=1.715e-01  rho_p=-0.0011  rho_n=-0.0049  (17.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.689 <p>=0.688
+  iter 28  |dphi|=1.294e-01  rho_p=-0.0011  rho_n=-0.0048  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.689 <p>=0.688
+  iter 29  |dphi|=1.204e-01  rho_p=-0.0011  rho_n=-0.0047  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.689 <p>=0.688
+  iter 30  |dphi|=9.114e-02  rho_p=-0.0011  rho_n=-0.0047  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.689 <p>=0.688
+  iter 31  |dphi|=5.749e-02  rho_p=-0.0011  rho_n=-0.0046  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.689 <p>=0.688
+  iter 32  |dphi|=1.863e-02  rho_p=-0.0011  rho_n=-0.0046  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.689 <p>=0.688
+  iter 33  |dphi|=7.663e-02  rho_p=-0.0011  rho_n=-0.0045  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.689 <p>=0.688
+  iter 34  |dphi|=3.016e-02  rho_p=-0.0011  rho_n=-0.0046  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.689 <p>=0.688
+  iter 35  |dphi|=3.624e-02  rho_p=-0.0011  rho_n=-0.0045  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.689 <p>=0.688
+  iter 36  |dphi|=3.983e-02  rho_p=-0.0011  rho_n=-0.0045  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.688 <p>=0.688
+  iter 37  |dphi|=1.140e-01  rho_p=-0.0010  rho_n=-0.0043  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.688 <p>=0.688
+  iter 38  |dphi|=1.184e-01  rho_p=-0.0010  rho_n=-0.0042  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.688 <p>=0.688
+  iter 39  |dphi|=6.461e-02  rho_p=-0.0009  rho_n=-0.0038  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.688
+  iter 40  |dphi|=1.793e-01  rho_p=-0.0009  rho_n=-0.0037  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.688 <p>=0.688
+  I = 1.0540e-18 A
+
+============================================================
+Bias point 11/15: V_DS = +0.250 V
+============================================================
+  alpha (from a_lat=0.5) = 1399.90
+  cached self-energies (Dirac, n_per=40): 121 pts in 1.5s
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.649 <p>=0.725
+  iter  1  |dphi|=7.410e-02  rho_p=+0.0212  rho_n=+0.1317  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.649 <p>=0.725
+  iter  2  |dphi|=7.190e-02  rho_p=+0.0213  rho_n=+0.1324  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.649 <p>=0.726
+  iter  3  |dphi|=2.275e+00  rho_p=+0.0214  rho_n=+0.1332  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.656 <p>=0.719
+  iter  4  |dphi|=4.040e+00  rho_p=+0.0177  rho_n=+0.1089  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.670 <p>=0.707
+  iter  5  |dphi|=2.026e+00  rho_p=+0.0106  rho_n=+0.0630  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.676 <p>=0.700
+  iter  6  |dphi|=1.630e+00  rho_p=+0.0068  rho_n=+0.0406  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.681 <p>=0.695
+  iter  7  |dphi|=8.507e-01  rho_p=+0.0037  rho_n=+0.0214  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.2s <n>=0.684 <p>=0.692
+  iter  8  |dphi|=4.347e-01  rho_p=+0.0020  rho_n=+0.0115  (18.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.3s <n>=0.684 <p>=0.692
+  iter  9  |dphi|=4.025e-01  rho_p=+0.0020  rho_n=+0.0109  (18.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.685 <p>=0.691
+  iter 10  |dphi|=3.980e-01  rho_p=+0.0014  rho_n=+0.0073  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.3s <n>=0.686 <p>=0.690
+  iter 11  |dphi|=5.098e-01  rho_p=+0.0008  rho_n=+0.0034  (18.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.687 <p>=0.690
+  iter 12  |dphi|=3.765e-01  rho_p=+0.0007  rho_n=+0.0025  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.687 <p>=0.689
+  iter 13  |dphi|=4.965e-01  rho_p=+0.0005  rho_n=+0.0018  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.687 <p>=0.690
+  iter 14  |dphi|=4.626e-01  rho_p=+0.0006  rho_n=+0.0022  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.686 <p>=0.690
+  iter 15  |dphi|=4.354e-01  rho_p=+0.0007  rho_n=+0.0030  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.686 <p>=0.690
+  iter 16  |dphi|=3.136e-01  rho_p=+0.0008  rho_n=+0.0033  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.686 <p>=0.690
+  iter 17  |dphi|=2.537e-01  rho_p=+0.0009  rho_n=+0.0041  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.686 <p>=0.690
+  iter 18  |dphi|=4.249e-01  rho_p=+0.0009  rho_n=+0.0037  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.686 <p>=0.690
+  iter 19  |dphi|=3.721e-01  rho_p=+0.0010  rho_n=+0.0046  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.686 <p>=0.690
+  iter 20  |dphi|=3.478e-01  rho_p=+0.0008  rho_n=+0.0035  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.686 <p>=0.690
+  iter 21  |dphi|=2.839e-01  rho_p=+0.0007  rho_n=+0.0030  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.686 <p>=0.690
+  iter 22  |dphi|=1.584e-01  rho_p=+0.0006  rho_n=+0.0024  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.687 <p>=0.690
+  iter 23  |dphi|=3.969e-01  rho_p=+0.0005  rho_n=+0.0017  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.687 <p>=0.690
+  iter 24  |dphi|=1.257e-01  rho_p=+0.0004  rho_n=+0.0010  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.687 <p>=0.689
+  iter 25  |dphi|=2.460e-01  rho_p=+0.0002  rho_n=+0.0001  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.687 <p>=0.689
+  iter 26  |dphi|=1.145e-01  rho_p=+0.0002  rho_n=-0.0002  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.687 <p>=0.689
+  iter 27  |dphi|=1.485e-01  rho_p=+0.0001  rho_n=-0.0008  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.687 <p>=0.689
+  iter 28  |dphi|=1.526e-01  rho_p=+0.0001  rho_n=-0.0009  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.687 <p>=0.689
+  iter 29  |dphi|=9.513e-02  rho_p=+0.0000  rho_n=-0.0012  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.687 <p>=0.689
+  iter 30  |dphi|=7.560e-02  rho_p=+0.0000  rho_n=-0.0013  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.687 <p>=0.689
+  iter 31  |dphi|=1.794e-02  rho_p=-0.0000  rho_n=-0.0014  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.687 <p>=0.689
+  iter 32  |dphi|=1.202e-02  rho_p=-0.0000  rho_n=-0.0014  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.687 <p>=0.689
+  iter 33  |dphi|=2.203e-02  rho_p=-0.0000  rho_n=-0.0015  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.687 <p>=0.689
+  iter 34  |dphi|=5.648e-02  rho_p=-0.0000  rho_n=-0.0014  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.687 <p>=0.689
+  iter 35  |dphi|=1.464e-02  rho_p=-0.0000  rho_n=-0.0013  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.687 <p>=0.689
+  iter 36  |dphi|=7.678e-02  rho_p=+0.0000  rho_n=-0.0013  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.687 <p>=0.689
+  iter 37  |dphi|=5.905e-02  rho_p=-0.0000  rho_n=-0.0014  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.687 <p>=0.689
+  iter 38  |dphi|=5.033e-02  rho_p=-0.0000  rho_n=-0.0014  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.687 <p>=0.689
+  iter 39  |dphi|=1.438e-01  rho_p=-0.0000  rho_n=-0.0015  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.687 <p>=0.689
+  iter 40  |dphi|=1.681e-01  rho_p=-0.0000  rho_n=-0.0015  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.687 <p>=0.689
+  I = 4.5640e-18 A
+
+============================================================
+Bias point 12/15: V_DS = +0.300 V
+============================================================
+  alpha (from a_lat=0.5) = 1399.90
+  cached self-energies (Dirac, n_per=40): 121 pts in 1.5s
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.641 <p>=0.732
+  iter  1  |dphi|=8.856e-02  rho_p=+0.0261  rho_n=+0.1571  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.641 <p>=0.733
+  iter  2  |dphi|=8.594e-02  rho_p=+0.0263  rho_n=+0.1579  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.640 <p>=0.733
+  iter  3  |dphi|=2.854e+00  rho_p=+0.0264  rho_n=+0.1588  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.650 <p>=0.725
+  iter  4  |dphi|=4.665e+00  rho_p=+0.0217  rho_n=+0.1292  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.666 <p>=0.711
+  iter  5  |dphi|=2.516e+00  rho_p=+0.0136  rho_n=+0.0760  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.1s <n>=0.674 <p>=0.703
+  iter  6  |dphi|=1.865e+00  rho_p=+0.0089  rho_n=+0.0485  (17.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.2s <n>=0.679 <p>=0.697
+  iter  7  |dphi|=1.251e+00  rho_p=+0.0053  rho_n=+0.0272  (17.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.684 <p>=0.693
+  iter  8  |dphi|=7.391e-01  rho_p=+0.0028  rho_n=+0.0127  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.683 <p>=0.693
+  iter  9  |dphi|=6.182e-01  rho_p=+0.0033  rho_n=+0.0149  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.684 <p>=0.693
+  iter 10  |dphi|=6.072e-01  rho_p=+0.0028  rho_n=+0.0122  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.685 <p>=0.691
+  iter 11  |dphi|=4.342e-01  rho_p=+0.0018  rho_n=+0.0065  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.686 <p>=0.690
+  iter 12  |dphi|=4.382e-01  rho_p=+0.0015  rho_n=+0.0044  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.3s <n>=0.686 <p>=0.690
+  iter 13  |dphi|=7.123e-01  rho_p=+0.0012  rho_n=+0.0027  (18.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.687 <p>=0.690
+  iter 14  |dphi|=3.808e-01  rho_p=+0.0010  rho_n=+0.0017  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.687 <p>=0.690
+  iter 15  |dphi|=4.071e-01  rho_p=+0.0010  rho_n=+0.0014  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 18.1s <n>=0.687 <p>=0.689
+  iter 16  |dphi|=5.242e-01  rho_p=+0.0006  rho_n=-0.0003  (18.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.687 <p>=0.689
+  iter 17  |dphi|=4.269e-01  rho_p=+0.0008  rho_n=+0.0003  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.688 <p>=0.689
+  iter 18  |dphi|=3.527e-01  rho_p=+0.0005  rho_n=-0.0018  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.688 <p>=0.689
+  iter 19  |dphi|=2.727e-01  rho_p=+0.0005  rho_n=-0.0020  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.2s <n>=0.688 <p>=0.689
+  iter 20  |dphi|=2.889e-01  rho_p=+0.0004  rho_n=-0.0028  (17.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.689
+  iter 21  |dphi|=4.754e-01  rho_p=+0.0004  rho_n=-0.0027  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.688 <p>=0.689
+  iter 22  |dphi|=2.780e-01  rho_p=+0.0005  rho_n=-0.0027  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.688 <p>=0.689
+  iter 23  |dphi|=2.722e-01  rho_p=+0.0005  rho_n=-0.0027  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.688 <p>=0.689
+  iter 24  |dphi|=4.295e-01  rho_p=+0.0006  rho_n=-0.0025  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.688 <p>=0.689
+  iter 25  |dphi|=3.703e-01  rho_p=+0.0005  rho_n=-0.0029  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.7s <n>=0.687 <p>=0.689
+  iter 26  |dphi|=2.197e-01  rho_p=+0.0006  rho_n=-0.0026  (18.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.1s <n>=0.687 <p>=0.689
+  iter 27  |dphi|=1.577e-01  rho_p=+0.0006  rho_n=-0.0027  (17.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.1s <n>=0.687 <p>=0.689
+  iter 28  |dphi|=9.531e-02  rho_p=+0.0006  rho_n=-0.0026  (17.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.687 <p>=0.689
+  iter 29  |dphi|=2.268e-02  rho_p=+0.0006  rho_n=-0.0026  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.687 <p>=0.689
+  iter 30  |dphi|=1.576e-01  rho_p=+0.0007  rho_n=-0.0026  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.3s <n>=0.687 <p>=0.689
+  iter 31  |dphi|=3.584e-02  rho_p=+0.0006  rho_n=-0.0026  (18.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.687 <p>=0.689
+  iter 32  |dphi|=3.583e-01  rho_p=+0.0007  rho_n=-0.0025  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.3s <n>=0.687 <p>=0.689
+  iter 33  |dphi|=7.436e-02  rho_p=+0.0007  rho_n=-0.0022  (18.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.687 <p>=0.689
+  iter 34  |dphi|=2.442e-01  rho_p=+0.0007  rho_n=-0.0022  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.687 <p>=0.689
+  iter 35  |dphi|=2.402e-01  rho_p=+0.0007  rho_n=-0.0026  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.687 <p>=0.689
+  iter 36  |dphi|=2.266e-01  rho_p=+0.0007  rho_n=-0.0029  (17.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.1s <n>=0.688 <p>=0.689
+  iter 37  |dphi|=1.153e-01  rho_p=+0.0007  rho_n=-0.0034  (17.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.688 <p>=0.689
+  iter 38  |dphi|=1.722e-01  rho_p=+0.0007  rho_n=-0.0035  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.688 <p>=0.689
+  iter 39  |dphi|=2.736e-01  rho_p=+0.0006  rho_n=-0.0042  (16.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.688 <p>=0.689
+  iter 40  |dphi|=1.741e-01  rho_p=+0.0007  rho_n=-0.0045  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.688 <p>=0.689
+  I = 2.4134e-17 A
+
+============================================================
+Bias point 13/15: V_DS = +0.350 V
+============================================================
+  alpha (from a_lat=0.5) = 1399.90
+  cached self-energies (Dirac, n_per=40): 121 pts in 1.5s
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.632 <p>=0.739
+  iter  1  |dphi|=1.029e-01  rho_p=+0.0316  rho_n=+0.1834  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.632 <p>=0.740
+  iter  2  |dphi|=9.988e-02  rho_p=+0.0317  rho_n=+0.1844  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.1s <n>=0.632 <p>=0.740
+  iter  3  |dphi|=3.544e+00  rho_p=+0.0319  rho_n=+0.1854  (17.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.644 <p>=0.730
+  iter  4  |dphi|=5.336e+00  rho_p=+0.0260  rho_n=+0.1475  (17.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.2s <n>=0.662 <p>=0.714
+  iter  5  |dphi|=2.935e+00  rho_p=+0.0168  rho_n=+0.0874  (17.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.1s <n>=0.671 <p>=0.706
+  iter  6  |dphi|=2.066e+00  rho_p=+0.0115  rho_n=+0.0554  (17.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.677 <p>=0.699
+  iter  7  |dphi|=1.767e+00  rho_p=+0.0075  rho_n=+0.0324  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.683 <p>=0.693
+  iter  8  |dphi|=7.389e-01  rho_p=+0.0041  rho_n=+0.0129  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.683 <p>=0.693
+  iter  9  |dphi|=7.652e-01  rho_p=+0.0042  rho_n=+0.0131  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.683 <p>=0.693
+  iter 10  |dphi|=6.442e-01  rho_p=+0.0041  rho_n=+0.0121  (17.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.684 <p>=0.692
+  iter 11  |dphi|=5.972e-01  rho_p=+0.0033  rho_n=+0.0071  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.685 <p>=0.691
+  iter 12  |dphi|=4.354e-01  rho_p=+0.0028  rho_n=+0.0041  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.1s <n>=0.686 <p>=0.691
+  iter 13  |dphi|=9.335e-01  rho_p=+0.0025  rho_n=+0.0023  (17.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.686 <p>=0.691
+  iter 14  |dphi|=6.364e-01  rho_p=+0.0026  rho_n=+0.0024  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.686 <p>=0.691
+  iter 15  |dphi|=4.879e-01  rho_p=+0.0028  rho_n=+0.0028  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.685 <p>=0.691
+  iter 16  |dphi|=4.747e-01  rho_p=+0.0028  rho_n=+0.0030  (17.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.685 <p>=0.691
+  iter 17  |dphi|=4.858e-01  rho_p=+0.0030  rho_n=+0.0037  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.685 <p>=0.691
+  iter 18  |dphi|=4.275e-01  rho_p=+0.0030  rho_n=+0.0032  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.3s <n>=0.685 <p>=0.691
+  iter 19  |dphi|=3.162e-01  rho_p=+0.0031  rho_n=+0.0038  (18.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.685 <p>=0.691
+  iter 20  |dphi|=3.198e-01  rho_p=+0.0031  rho_n=+0.0031  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.685 <p>=0.691
+  iter 21  |dphi|=5.699e-01  rho_p=+0.0031  rho_n=+0.0031  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.685 <p>=0.691
+  iter 22  |dphi|=3.241e-01  rho_p=+0.0031  rho_n=+0.0021  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.686 <p>=0.691
+  iter 23  |dphi|=2.829e-01  rho_p=+0.0030  rho_n=+0.0013  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.686 <p>=0.691
+  iter 24  |dphi|=1.888e-01  rho_p=+0.0030  rho_n=+0.0007  (17.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.1s <n>=0.686 <p>=0.690
+  iter 25  |dphi|=4.375e-01  rho_p=+0.0028  rho_n=-0.0002  (17.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.686 <p>=0.690
+  iter 26  |dphi|=1.852e-01  rho_p=+0.0029  rho_n=-0.0003  (17.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.686 <p>=0.690
+  iter 27  |dphi|=1.737e-01  rho_p=+0.0027  rho_n=-0.0015  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.686 <p>=0.690
+  iter 28  |dphi|=1.476e-01  rho_p=+0.0027  rho_n=-0.0020  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.1s <n>=0.687 <p>=0.690
+  iter 29  |dphi|=1.497e-01  rho_p=+0.0027  rho_n=-0.0026  (17.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.687 <p>=0.690
+  iter 30  |dphi|=2.204e-01  rho_p=+0.0026  rho_n=-0.0030  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.687 <p>=0.690
+  iter 31  |dphi|=1.353e-01  rho_p=+0.0026  rho_n=-0.0034  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.687 <p>=0.690
+  iter 32  |dphi|=8.350e-02  rho_p=+0.0026  rho_n=-0.0037  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.687 <p>=0.690
+  iter 33  |dphi|=1.337e-01  rho_p=+0.0026  rho_n=-0.0038  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.687 <p>=0.690
+  iter 34  |dphi|=7.290e-02  rho_p=+0.0026  rho_n=-0.0040  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.687 <p>=0.690
+  iter 35  |dphi|=5.053e-02  rho_p=+0.0026  rho_n=-0.0041  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.2s <n>=0.687 <p>=0.689
+  iter 36  |dphi|=6.579e-02  rho_p=+0.0026  rho_n=-0.0043  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.3s <n>=0.687 <p>=0.689
+  iter 37  |dphi|=6.127e-02  rho_p=+0.0025  rho_n=-0.0043  (18.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.687 <p>=0.689
+  iter 38  |dphi|=1.769e-01  rho_p=+0.0025  rho_n=-0.0044  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.687 <p>=0.689
+  iter 39  |dphi|=1.787e-01  rho_p=+0.0025  rho_n=-0.0042  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.687 <p>=0.689
+  iter 40  |dphi|=1.031e-01  rho_p=+0.0024  rho_n=-0.0042  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.687 <p>=0.689
+  I = 1.2959e-16 A
+
+============================================================
+Bias point 14/15: V_DS = +0.400 V
+============================================================
+  alpha (from a_lat=0.5) = 1399.90
+  cached self-energies (Dirac, n_per=40): 121 pts in 1.5s
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.623 <p>=0.747
+  iter  1  |dphi|=1.189e-01  rho_p=+0.0378  rho_n=+0.2099  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.623 <p>=0.747
+  iter  2  |dphi|=1.155e-01  rho_p=+0.0380  rho_n=+0.2111  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.3s <n>=0.623 <p>=0.747
+  iter  3  |dphi|=4.256e+00  rho_p=+0.0382  rho_n=+0.2123  (18.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.637 <p>=0.736
+  iter  4  |dphi|=6.067e+00  rho_p=+0.0310  rho_n=+0.1662  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.657 <p>=0.718
+  iter  5  |dphi|=3.409e+00  rho_p=+0.0208  rho_n=+0.1004  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.668 <p>=0.709
+  iter  6  |dphi|=2.394e+00  rho_p=+0.0149  rho_n=+0.0638  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.675 <p>=0.701
+  iter  7  |dphi|=1.909e+00  rho_p=+0.0103  rho_n=+0.0387  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.681 <p>=0.696
+  iter  8  |dphi|=1.021e+00  rho_p=+0.0068  rho_n=+0.0186  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.683 <p>=0.693
+  iter  9  |dphi|=1.106e+00  rho_p=+0.0052  rho_n=+0.0096  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.683 <p>=0.694
+  iter 10  |dphi|=8.723e-01  rho_p=+0.0057  rho_n=+0.0113  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.3s <n>=0.683 <p>=0.693
+  iter 11  |dphi|=6.737e-01  rho_p=+0.0054  rho_n=+0.0089  (18.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.684 <p>=0.692
+  iter 12  |dphi|=7.543e-01  rho_p=+0.0047  rho_n=+0.0044  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.5s <n>=0.685 <p>=0.692
+  iter 13  |dphi|=4.449e-01  rho_p=+0.0045  rho_n=+0.0025  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.685 <p>=0.691
+  iter 14  |dphi|=6.462e-01  rho_p=+0.0043  rho_n=+0.0012  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.2s <n>=0.685 <p>=0.691
+  iter 15  |dphi|=9.612e-01  rho_p=+0.0044  rho_n=+0.0014  (17.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.2s <n>=0.685 <p>=0.691
+  iter 16  |dphi|=6.525e-01  rho_p=+0.0045  rho_n=-0.0001  (17.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.685 <p>=0.691
+  iter 17  |dphi|=5.650e-01  rho_p=+0.0045  rho_n=-0.0006  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.2s <n>=0.685 <p>=0.691
+  iter 18  |dphi|=3.887e-01  rho_p=+0.0046  rho_n=-0.0007  (17.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.685 <p>=0.691
+  iter 19  |dphi|=5.735e-01  rho_p=+0.0046  rho_n=-0.0013  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.685 <p>=0.691
+  iter 20  |dphi|=4.404e-01  rho_p=+0.0048  rho_n=-0.0011  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.685 <p>=0.691
+  iter 21  |dphi|=3.173e-01  rho_p=+0.0047  rho_n=-0.0022  (17.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.685 <p>=0.691
+  iter 22  |dphi|=3.705e-01  rho_p=+0.0048  rho_n=-0.0023  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.686 <p>=0.691
+  iter 23  |dphi|=4.454e-01  rho_p=+0.0047  rho_n=-0.0036  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.1s <n>=0.686 <p>=0.691
+  iter 24  |dphi|=3.419e-01  rho_p=+0.0048  rho_n=-0.0040  (17.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.686 <p>=0.691
+  iter 25  |dphi|=2.561e-01  rho_p=+0.0049  rho_n=-0.0045  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.5s <n>=0.686 <p>=0.691
+  iter 26  |dphi|=3.724e-01  rho_p=+0.0049  rho_n=-0.0051  (18.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.686 <p>=0.691
+  iter 27  |dphi|=2.028e-01  rho_p=+0.0051  rho_n=-0.0051  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.686 <p>=0.691
+  iter 28  |dphi|=3.143e-01  rho_p=+0.0051  rho_n=-0.0054  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.686 <p>=0.691
+  iter 29  |dphi|=1.755e-01  rho_p=+0.0053  rho_n=-0.0053  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.686 <p>=0.691
+  iter 30  |dphi|=1.435e-01  rho_p=+0.0054  rho_n=-0.0053  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.1s <n>=0.686 <p>=0.691
+  iter 31  |dphi|=5.109e-02  rho_p=+0.0054  rho_n=-0.0053  (17.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.4s <n>=0.686 <p>=0.691
+  iter 32  |dphi|=8.897e-02  rho_p=+0.0055  rho_n=-0.0053  (18.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.1s <n>=0.686 <p>=0.691
+  iter 33  |dphi|=2.089e-02  rho_p=+0.0054  rho_n=-0.0051  (17.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.686 <p>=0.691
+  iter 34  |dphi|=7.409e-02  rho_p=+0.0054  rho_n=-0.0051  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.2s <n>=0.685 <p>=0.691
+  iter 35  |dphi|=7.045e-02  rho_p=+0.0054  rho_n=-0.0048  (18.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.686 <p>=0.691
+  iter 36  |dphi|=1.143e-01  rho_p=+0.0054  rho_n=-0.0049  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.6s <n>=0.685 <p>=0.691
+  iter 37  |dphi|=7.274e-02  rho_p=+0.0053  rho_n=-0.0045  (17.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.685 <p>=0.691
+  iter 38  |dphi|=6.346e-02  rho_p=+0.0053  rho_n=-0.0045  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.0s <n>=0.685 <p>=0.691
+  iter 39  |dphi|=1.061e-01  rho_p=+0.0052  rho_n=-0.0044  (16.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.3s <n>=0.685 <p>=0.691
+  iter 40  |dphi|=2.806e-01  rho_p=+0.0052  rho_n=-0.0044  (18.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.686 <p>=0.691
+  I = 7.2067e-16 A
+
+============================================================
+Bias point 15/15: V_DS = +0.500 V
+============================================================
+  alpha (from a_lat=0.5) = 1399.90
+  cached self-energies (Dirac, n_per=40): 121 pts in 1.5s
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.605 <p>=0.761
+  iter  1  |dphi|=1.515e-01  rho_p=+0.0529  rho_n=+0.2635  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.604 <p>=0.761
+  iter  2  |dphi|=1.473e-01  rho_p=+0.0531  rho_n=+0.2650  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.604 <p>=0.762
+  iter  3  |dphi|=5.993e+00  rho_p=+0.0534  rho_n=+0.2665  (17.5s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.7s <n>=0.624 <p>=0.746
+  iter  4  |dphi|=6.720e+00  rho_p=+0.0431  rho_n=+0.2018  (18.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.6s <n>=0.646 <p>=0.728
+  iter  5  |dphi|=4.621e+00  rho_p=+0.0317  rho_n=+0.1293  (18.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.5s <n>=0.660 <p>=0.716
+  iter  6  |dphi|=3.200e+00  rho_p=+0.0236  rho_n=+0.0825  (18.3s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.669 <p>=0.707
+  iter  7  |dphi|=2.346e+00  rho_p=+0.0176  rho_n=+0.0527  (17.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.3s <n>=0.676 <p>=0.701
+  iter  8  |dphi|=2.025e+00  rho_p=+0.0132  rho_n=+0.0295  (17.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.681 <p>=0.696
+  iter  9  |dphi|=7.836e-01  rho_p=+0.0099  rho_n=+0.0120  (17.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.682 <p>=0.694
+  iter 10  |dphi|=7.463e-01  rho_p=+0.0090  rho_n=+0.0067  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.683 <p>=0.693
+  iter 11  |dphi|=1.143e+00  rho_p=+0.0084  rho_n=+0.0031  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.3s <n>=0.685 <p>=0.691
+  iter 12  |dphi|=1.036e+00  rho_p=+0.0073  rho_n=-0.0033  (18.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.2s <n>=0.686 <p>=0.691
+  iter 13  |dphi|=1.112e+00  rho_p=+0.0069  rho_n=-0.0058  (17.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.8s <n>=0.686 <p>=0.690
+  iter 14  |dphi|=6.215e-01  rho_p=+0.0069  rho_n=-0.0071  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.2s <n>=0.686 <p>=0.690
+  iter 15  |dphi|=1.021e+00  rho_p=+0.0067  rho_n=-0.0084  (17.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.685 <p>=0.691
+  iter 16  |dphi|=7.389e-01  rho_p=+0.0074  rho_n=-0.0065  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.4s <n>=0.686 <p>=0.690
+  iter 17  |dphi|=8.919e-01  rho_p=+0.0069  rho_n=-0.0103  (18.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.7s <n>=0.686 <p>=0.690
+  iter 18  |dphi|=5.946e-01  rho_p=+0.0072  rho_n=-0.0099  (18.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.686 <p>=0.690
+  iter 19  |dphi|=6.681e-01  rho_p=+0.0072  rho_n=-0.0107  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.4s <n>=0.686 <p>=0.690
+  iter 20  |dphi|=6.979e-01  rho_p=+0.0074  rho_n=-0.0106  (18.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.2s <n>=0.686 <p>=0.690
+  iter 21  |dphi|=6.944e-01  rho_p=+0.0076  rho_n=-0.0110  (18.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.686 <p>=0.690
+  iter 22  |dphi|=5.320e-01  rho_p=+0.0078  rho_n=-0.0117  (17.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.686 <p>=0.690
+  iter 23  |dphi|=3.784e-01  rho_p=+0.0080  rho_n=-0.0116  (17.7s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.686 <p>=0.690
+  iter 24  |dphi|=6.772e-01  rho_p=+0.0080  rho_n=-0.0129  (17.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.3s <n>=0.686 <p>=0.690
+  iter 25  |dphi|=5.442e-01  rho_p=+0.0085  rho_n=-0.0117  (18.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.4s <n>=0.686 <p>=0.690
+  iter 26  |dphi|=4.118e-01  rho_p=+0.0086  rho_n=-0.0127  (17.4s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.2s <n>=0.686 <p>=0.690
+  iter 27  |dphi|=2.808e-01  rho_p=+0.0088  rho_n=-0.0130  (18.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.3s <n>=0.686 <p>=0.690
+  iter 28  |dphi|=2.362e-01  rho_p=+0.0090  rho_n=-0.0134  (18.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.686 <p>=0.690
+  iter 29  |dphi|=2.756e-01  rho_p=+0.0091  rho_n=-0.0137  (18.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.5s <n>=0.686 <p>=0.690
+  iter 30  |dphi|=1.677e-01  rho_p=+0.0092  rho_n=-0.0139  (18.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.4s <n>=0.686 <p>=0.690
+  iter 31  |dphi|=1.046e-01  rho_p=+0.0094  rho_n=-0.0139  (18.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.2s <n>=0.686 <p>=0.690
+  iter 32  |dphi|=1.151e-01  rho_p=+0.0094  rho_n=-0.0139  (18.0s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.3s <n>=0.686 <p>=0.690
+  iter 33  |dphi|=3.384e-01  rho_p=+0.0093  rho_n=-0.0143  (18.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.1s <n>=0.686 <p>=0.690
+  iter 34  |dphi|=1.652e-01  rho_p=+0.0092  rho_n=-0.0135  (17.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.9s <n>=0.686 <p>=0.690
+  iter 35  |dphi|=9.712e-02  rho_p=+0.0091  rho_n=-0.0130  (17.6s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.3s <n>=0.686 <p>=0.690
+  iter 36  |dphi|=5.926e-02  rho_p=+0.0091  rho_n=-0.0128  (18.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.5s <n>=0.686 <p>=0.690
+  iter 37  |dphi|=3.722e-02  rho_p=+0.0091  rho_n=-0.0127  (18.2s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.4s <n>=0.686 <p>=0.690
+  iter 38  |dphi|=1.031e-01  rho_p=+0.0091  rho_n=-0.0128  (18.1s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.1s <n>=0.686 <p>=0.690
+  iter 39  |dphi|=1.935e-01  rho_p=+0.0090  rho_n=-0.0129  (17.9s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 17.0s <n>=0.686 <p>=0.690
+  iter 40  |dphi|=1.502e-01  rho_p=+0.0090  rho_n=-0.0128  (17.8s)
+  NEGF (Dirac, 2-orb): 121 E-pts in 16.7s <n>=0.686 <p>=0.690
+  I = 1.7895e-14 A
+
+============================================================
+Dirac diode IV summary:
+  gap = 0.6 eV
+  V_bi = -0.0435 V
+
+    V_DS (V)           I (A)
+     -0.4000     -5.0160e-16
+     -0.3000     -1.5318e-17
+     -0.2000     -7.1188e-19
+     -0.1000     -4.8037e-20
+     -0.0500     -1.1798e-20
+      0.0000      0.0000e+00
+      0.0500      1.3324e-20
+      0.1000      6.3179e-20
+      0.1500      2.6184e-19
+      0.2000      1.0540e-18
+      0.2500      4.5640e-18
+      0.3000      2.4134e-17
+      0.3500      1.2959e-16
+      0.4000      7.2067e-16
+      0.5000      1.7895e-14
+============================================================
+saved iv_dirac.png
+saved iv_dirac.npz
